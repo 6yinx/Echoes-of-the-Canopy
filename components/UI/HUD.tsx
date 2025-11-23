@@ -365,6 +365,8 @@ import { Joystick } from './Joystick';
 const MobileControls: React.FC = () => {
     const setMobileInput = useGameStore(state => state.setMobileInput);
     const toggleInventory = useGameStore(state => state.toggleInventory);
+    const toggleLantern = useGameStore(state => state.toggleLantern);
+    const isLanternActive = useGameStore(state => state.isLanternActive);
     const inventory = useGameStore(state => state.inventory);
     const activeSlot = useGameStore(state => state.activeSlot);
     const isInventoryOpen = useGameStore(state => state.isInventoryOpen);
@@ -406,6 +408,17 @@ const MobileControls: React.FC = () => {
                 >
                     {buttonLabel}
                 </button>
+
+                {/* Lantern toggle button */}
+                <button
+                    onClick={toggleLantern}
+                    className={`absolute top-[40%] right-20 transform -translate-y-1/2 w-16 h-16 rounded-full border-4 flex items-center justify-center shadow-lg pointer-events-auto backdrop-blur-sm transition-all ${isLanternActive
+                            ? 'bg-amber-500/80 border-amber-300 text-2xl'
+                            : 'bg-stone-800/60 border-stone-600/40 text-2xl'
+                        }`}
+                >
+                    {isLanternActive ? '🔦' : '💡'}
+                </button>
             </div>
 
             {/* Inventory button */}
@@ -423,6 +436,90 @@ const MobileControls: React.FC = () => {
     )
 }
 
+const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [name, setName] = useState('');
+    const [message, setMessage] = useState('');
+    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStatus('sending');
+
+        try {
+            const response = await fetch('https://formspree.io/f/mvgoqpnr', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name || 'Anonymous',
+                    message,
+                    _replyto: 'noreply@echoes-game.com'
+                })
+            });
+
+            if (response.ok) {
+                setStatus('success');
+                setTimeout(() => {
+                    onClose();
+                }, 2000);
+            } else {
+                setStatus('error');
+            }
+        } catch (error) {
+            setStatus('error');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center pointer-events-auto" onClick={onClose}>
+            <div className="bg-stone-900 p-8 rounded-lg border-2 border-amber-600 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <h2 className="text-2xl text-amber-500 font-serif mb-4 text-center">Send Feedback</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <input
+                            type="text"
+                            placeholder="Your name (optional)"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full p-3 bg-stone-800 border border-stone-600 rounded text-stone-200 font-serif focus:border-amber-500 focus:outline-none"
+                        />
+                    </div>
+                    <div>
+                        <textarea
+                            placeholder="Your feedback or suggestions..."
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            required
+                            className="w-full p-3 bg-stone-800 border border-stone-600 rounded text-stone-200 font-serif h-32 resize-none focus:border-amber-500 focus:outline-none"
+                        />
+                    </div>
+                    <div className="flex gap-4">
+                        <button
+                            type="submit"
+                            disabled={status === 'sending'}
+                            className="flex-1 px-6 py-3 bg-amber-900/80 hover:bg-amber-800 border border-amber-600 text-amber-100 font-serif rounded transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {status === 'sending' ? 'Sending...' : 'Send Feedback'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-6 py-3 bg-stone-800/80 hover:bg-stone-700 border border-stone-600 text-stone-300 font-serif rounded transition-all shadow-lg"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                    {status === 'success' && (
+                        <p className="text-green-500 text-center font-serif">✓ Thank you for your feedback!</p>
+                    )}
+                    {status === 'error' && (
+                        <p className="text-red-500 text-center font-serif">✗ Error sending. Please try again.</p>
+                    )}
+                </form>
+            </div>
+        </div>
+    );
+};
+
 const StartMenu: React.FC = () => {
     const setGameState = useGameStore(state => state.setGameState);
     const setShowIntro = useGameStore(state => state.setShowIntro);
@@ -431,6 +528,7 @@ const StartMenu: React.FC = () => {
     const hasSaveFile = useGameStore(state => state.hasSaveFile);
 
     const [showControls, setShowControls] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(false);
     const [hasSave, setHasSave] = useState(false);
 
     useEffect(() => {
@@ -460,41 +558,75 @@ const StartMenu: React.FC = () => {
     }
 
     return (
-        <div className="absolute inset-0 bg-black/90 z-50 flex flex-col items-center justify-center pointer-events-auto">
-            <div className="flex flex-col items-center mb-8">
-                <h1 className="text-7xl font-serif text-amber-500 tracking-widest drop-shadow-lg text-center leading-tight mb-2" style={{ willChange: 'transform' }}>
-                    ECHOES
-                </h1>
-                <h2 className="text-3xl font-serif text-amber-700/80 tracking-widest drop-shadow-lg text-center" style={{ willChange: 'transform' }}>
-                    OF THE CANOPY
-                </h2>
+        <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center pointer-events-auto">
+            <div className="flex items-start gap-8 max-w-5xl">
+                {/* Main Menu */}
+                <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center mb-8">
+                        <h1 className="text-7xl font-serif text-amber-500 tracking-widest drop-shadow-lg text-center leading-tight mb-2" style={{ willChange: 'transform' }}>
+                            ECHOES
+                        </h1>
+                        <h2 className="text-3xl font-serif text-amber-700/80 tracking-widest drop-shadow-lg text-center" style={{ willChange: 'transform' }}>
+                            OF THE CANOPY
+                        </h2>
+                    </div>
+
+                    {!showControls ? (
+                        <div className="flex flex-col gap-4 w-64">
+                            <button onClick={handleNewGame} className="px-6 py-4 bg-amber-900/80 hover:bg-amber-800 border border-amber-600 text-amber-100 font-serif rounded transition-all shadow-lg">
+                                NEW JOURNEY
+                            </button>
+                            {hasSave && (
+                                <button onClick={handleLoadGame} className="px-6 py-4 bg-stone-800/80 hover:bg-stone-700 border border-stone-600 text-stone-300 font-serif rounded transition-all shadow-lg">
+                                    CONTINUE
+                                </button>
+                            )}
+                            <button onClick={() => setShowControls(true)} className="px-6 py-2 bg-transparent hover:bg-white/5 border border-stone-600 text-stone-400 font-serif rounded transition-all text-sm">
+                                CONTROLS
+                            </button>
+                            <button
+                                onClick={() => setShowFeedback(true)}
+                                className="px-6 py-2 bg-transparent hover:bg-amber-900/20 border border-amber-600/40 text-amber-500/80 font-serif rounded transition-all text-sm flex items-center justify-center gap-2"
+                            >
+                                <span>💬</span> FEEDBACK
+                            </button>
+                        </div>
+                    ) : (
+                        <ControlsOverlay onClose={() => setShowControls(false)} />
+                    )}
+
+                    <div className="mt-12 text-stone-500 font-serif text-sm">v0.3.0 Beta</div>
+                </div>
+
+                {/* Suggestion Panel */}
+                {!showControls && (
+                    <div className="bg-stone-900/60 border-2 border-amber-600/30 rounded-lg p-6 max-w-xs backdrop-blur-sm">
+                        <div className="flex items-start gap-3 mb-3">
+                            <span className="text-2xl">⚠️</span>
+                            <h3 className="text-amber-500 font-serif text-lg font-bold">Platform Notice</h3>
+                        </div>
+                        <div className="text-stone-300 font-serif text-sm space-y-2">
+                            <p className="leading-relaxed">
+                                This game is <span className="text-amber-400">optimized for PC</span> with keyboard and mouse.
+                            </p>
+                            <p className="leading-relaxed">
+                                Mobile/tablet support is <span className="text-amber-400">experimental</span> and may have:
+                            </p>
+                            <ul className="list-disc list-inside space-y-1 text-xs text-stone-400 ml-2">
+                                <li>Limited graphics performance</li>
+                                <li>Touch control quirks</li>
+                                <li>Occasional bugs</li>
+                            </ul>
+                            <p className="text-amber-500/80 text-xs mt-3 italic">
+                                For the best experience, play on desktop!
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {!showControls ? (
-                <div className="flex flex-col gap-4 w-64">
-                    <button onClick={handleNewGame} className="px-6 py-4 bg-amber-900/80 hover:bg-amber-800 border border-amber-600 text-amber-100 font-serif rounded transition-all shadow-lg">
-                        NEW JOURNEY
-                    </button>
-                    {hasSave && (
-                        <button onClick={handleLoadGame} className="px-6 py-4 bg-stone-800/80 hover:bg-stone-700 border border-stone-600 text-stone-300 font-serif rounded transition-all shadow-lg">
-                            CONTINUE
-                        </button>
-                    )}
-                    <button onClick={() => setShowControls(true)} className="px-6 py-2 bg-transparent hover:bg-white/5 border border-stone-600 text-stone-400 font-serif rounded transition-all text-sm">
-                        CONTROLS
-                    </button>
-                    <button
-                        onClick={() => window.open('https://forms.gle/8zQxYvZ9K3mVJYYu8', '_blank')}
-                        className="px-6 py-2 bg-transparent hover:bg-amber-900/20 border border-amber-600/40 text-amber-500/80 font-serif rounded transition-all text-sm flex items-center justify-center gap-2"
-                    >
-                        <span>💬</span> FEEDBACK
-                    </button>
-                </div>
-            ) : (
-                <ControlsOverlay onClose={() => setShowControls(false)} />
-            )}
-
-            <div className="mt-12 text-stone-500 font-serif text-sm">v0.3.0 Beta</div>
+            {/* Feedback Modal */}
+            {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
         </div>
     )
 }
