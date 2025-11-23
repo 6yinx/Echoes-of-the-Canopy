@@ -541,7 +541,7 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
                 side = Math.floor(Math.random() * 4);
             }
 
-            const edge = limit - 0.2; // Very close to the edge
+            const edge = limit - 0.05; // Sticking to the barrier
             const range = limit - 10;
             const offset = (Math.random() - 0.5) * 2 * range;
 
@@ -604,7 +604,7 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
 
     return (
         <group position={pos} rotation={rot as any}>
-            <mesh castShadow receiveShadow>
+            <mesh>
                 <planeGeometry args={[3, 5]} />
                 <meshBasicMaterial color="black" side={THREE.DoubleSide} />
             </mesh>

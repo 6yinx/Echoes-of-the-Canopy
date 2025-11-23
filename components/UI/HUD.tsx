@@ -536,6 +536,8 @@ const StartMenu: React.FC = () => {
     const loadGame = useGameStore(state => state.loadGame);
     const resetGame = useGameStore(state => state.resetGame);
     const hasSaveFile = useGameStore(state => state.hasSaveFile);
+    const showTouchControls = useGameStore(state => state.showTouchControls);
+    const toggleTouchControls = useGameStore(state => state.toggleTouchControls);
 
     const [showControls, setShowControls] = useState(false);
     const [showFeedback, setShowFeedback] = useState(false);
@@ -610,7 +612,18 @@ const StartMenu: React.FC = () => {
                                 <span>Lantern</span> <span className="text-right text-amber-100">Q</span>
                                 <span>Sprint</span> <span className="text-right text-amber-100">Shift / Double W</span>
                             </div>
-                            <button onClick={() => setShowControls(false)} className="mt-4 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-400 rounded text-sm transition-colors">
+
+                            <div className="mt-4 pt-4 border-t border-stone-700 flex items-center justify-between">
+                                <span className="text-stone-400 text-sm">Touch Controls</span>
+                                <button
+                                    onClick={toggleTouchControls}
+                                    className={`w-12 h-6 rounded-full transition-colors relative ${showTouchControls ? 'bg-amber-600' : 'bg-stone-700'}`}
+                                >
+                                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${showTouchControls ? 'left-7' : 'left-1'}`} />
+                                </button>
+                            </div>
+
+                            <button onClick={() => setShowControls(false)} className="mt-4 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-400 rounded text-sm transition-colors w-full">
                                 BACK
                             </button>
                         </div>
