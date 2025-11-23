@@ -437,6 +437,99 @@ const MobileControls: React.FC = () => {
     )
 }
 
+
+const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [name, setName] = useState('');
+    const [message, setMessage] = useState('');
+    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStatus('sending');
+
+        try {
+            // REPLACE 'YOUR_FORMSPREE_ID' WITH YOUR ACTUAL FORM ID FROM FORMSPREE.IO
+            const response = await fetch('https://formspree.io/f/YOUR_FORMSPREE_ID', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name || 'Anonymous',
+                    message,
+                    _replyto: 'cheajy6138@gmail.com' // Optional: set a reply-to if you want
+                })
+            });
+
+            if (response.ok) {
+                setStatus('success');
+                setTimeout(onClose, 2000);
+            } else {
+                setStatus('error');
+            }
+        } catch (error) {
+            setStatus('error');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-[fadeIn_0.3s_ease-out]">
+            <div className="bg-stone-900 border-2 border-amber-600/50 p-8 rounded-xl max-w-md w-full shadow-2xl relative">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-stone-500 hover:text-amber-500 transition-colors"
+                >
+                    ✕
+                </button>
+
+                <h2 className="text-2xl font-serif text-amber-500 mb-6 text-center">Send Feedback</h2>
+
+                {status === 'success' ? (
+                    <div className="text-center py-8">
+                        <div className="text-4xl mb-4">✨</div>
+                        <p className="text-amber-100">Message sent successfully!</p>
+                        <p className="text-stone-500 text-sm mt-2">Thank you for your feedback.</p>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-stone-400 text-sm mb-1">Name (Optional)</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-stone-800 border border-stone-600 rounded p-2 text-amber-100 focus:border-amber-500 focus:outline-none transition-colors"
+                                placeholder="Traveler"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-stone-400 text-sm mb-1">Message</label>
+                            <textarea
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                required
+                                rows={4}
+                                className="w-full bg-stone-800 border border-stone-600 rounded p-2 text-amber-100 focus:border-amber-500 focus:outline-none transition-colors resize-none"
+                                placeholder="Share your thoughts..."
+                            />
+                        </div>
+
+                        {status === 'error' && (
+                            <p className="text-red-400 text-sm text-center">Failed to send. Please try again.</p>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={status === 'sending'}
+                            className="w-full bg-amber-700 hover:bg-amber-600 disabled:bg-stone-700 text-white font-bold py-3 rounded transition-colors mt-2"
+                        >
+                            {status === 'sending' ? 'Sending...' : 'Send Message'}
+                        </button>
+                    </form>
+                )}
+            </div>
+        </div>
+    );
+};
+
 const StartMenu: React.FC = () => {
     const setGameState = useGameStore(state => state.setGameState);
     const setShowIntro = useGameStore(state => state.setShowIntro);
@@ -445,6 +538,7 @@ const StartMenu: React.FC = () => {
     const hasSaveFile = useGameStore(state => state.hasSaveFile);
 
     const [showControls, setShowControls] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(false);
     const [hasSave, setHasSave] = useState(false);
 
     useEffect(() => {
@@ -498,47 +592,47 @@ const StartMenu: React.FC = () => {
                             <button onClick={() => setShowControls(true)} className="px-6 py-2 bg-transparent hover:bg-white/5 border border-stone-600 text-stone-400 font-serif rounded transition-all text-sm">
                                 CONTROLS
                             </button>
-                            <a
-                                href="mailto:cheajy6138@gmail.com?subject=Echoes%20of%20the%20Canopy%20Feedback"
+                            <button
+                                onClick={() => setShowFeedback(true)}
                                 className="px-6 py-2 bg-transparent hover:bg-amber-900/20 border border-amber-600/40 text-amber-500/80 font-serif rounded transition-all text-sm flex items-center justify-center gap-2"
                             >
                                 <span>💬</span> FEEDBACK
-                            </a>
+                            </button>
                         </div>
                     ) : (
-                        <ControlsOverlay onClose={() => setShowControls(false)} />
+                        <div className="flex flex-col gap-4 w-80 bg-stone-900/90 p-6 rounded-lg border border-stone-700">
+                            <h3 className="text-xl text-amber-500 font-serif mb-2 text-center">CONTROLS</h3>
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-stone-300">
+                                <span>Move</span> <span className="text-right text-amber-100">WASD</span>
+                                <span>Look</span> <span className="text-right text-amber-100">Mouse</span>
+                                <span>Interact</span> <span className="text-right text-amber-100">F / Click</span>
+                                <span>Inventory</span> <span className="text-right text-amber-100">E</span>
+                                <span>Lantern</span> <span className="text-right text-amber-100">Q</span>
+                                <span>Sprint</span> <span className="text-right text-amber-100">Shift / Double W</span>
+                            </div>
+                            <button onClick={() => setShowControls(false)} className="mt-4 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-400 rounded text-sm transition-colors">
+                                BACK
+                            </button>
+                        </div>
                     )}
 
                     <div className="mt-12 text-stone-500 font-serif text-sm">v0.3.0 Beta</div>
                 </div>
 
                 {/* Suggestion Panel */}
-                {!showControls && (
-                    <div className="bg-stone-900/60 border-2 border-amber-600/30 rounded-lg p-6 max-w-xs backdrop-blur-sm">
-                        <div className="flex items-start gap-3 mb-3">
-                            <span className="text-2xl">⚠️</span>
-                            <h3 className="text-amber-500 font-serif text-lg font-bold">Platform Notice</h3>
-                        </div>
-                        <div className="text-stone-300 font-serif text-sm space-y-2">
-                            <p className="leading-relaxed">
-                                This game is <span className="text-amber-400">optimized for PC</span> with keyboard and mouse.
-                            </p>
-                            <p className="leading-relaxed">
-                                Mobile/tablet support is <span className="text-amber-400">experimental</span> and may have:
-                            </p>
-                            <ul className="list-disc list-inside space-y-1 text-xs text-stone-400 ml-2">
-                                <li>Limited graphics performance</li>
-                                <li>Touch control quirks</li>
-                                <li>Occasional bugs</li>
-                            </ul>
-                            <p className="text-amber-500/80 text-xs mt-3 italic">
-                                For the best experience, play on desktop!
-                            </p>
-                        </div>
-                    </div>
-                )}
+                <div className="hidden lg:block w-64 bg-stone-900/60 border border-stone-700/50 p-4 rounded-lg backdrop-blur-sm">
+                    <h3 className="text-amber-600 font-serif text-sm mb-2 flex items-center gap-2">
+                        <span>💡</span> TIPS
+                    </h3>
+                    <ul className="text-xs text-stone-400 space-y-2 leading-relaxed">
+                        <li>• This world is best experienced on PC with a mouse and keyboard.</li>
+                        <li>• Use headphones for the full atmospheric effect.</li>
+                        <li>• If performance is low, try reducing your browser window size.</li>
+                    </ul>
+                </div>
             </div>
 
+            {showFeedback && <FeedbackModal onClose={() => setShowFeedback(false)} />}
         </div>
     )
 }
