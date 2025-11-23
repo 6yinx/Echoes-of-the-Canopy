@@ -360,6 +360,8 @@ const WakeUpOverlay: React.FC = () => {
     )
 }
 
+import { Joystick } from './Joystick';
+
 const MobileControls: React.FC = () => {
     const setMobileInput = useGameStore(state => state.setMobileInput);
     const toggleInventory = useGameStore(state => state.toggleInventory);
@@ -370,6 +372,17 @@ const MobileControls: React.FC = () => {
     const hasRock = inventory[activeSlot]?.type === 'small_rock';
     const buttonLabel = hasRock ? "THROW" : "ATTACK";
 
+    const handleJoystickMove = (x: number, y: number) => {
+        const deadZone = 0.2;
+
+        setMobileInput({
+            forward: y < -deadZone,
+            backward: y > deadZone,
+            left: x < -deadZone,
+            right: x > deadZone
+        });
+    };
+
     const handleInput = (key: string, pressed: boolean) => (e: React.PointerEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -378,27 +391,12 @@ const MobileControls: React.FC = () => {
 
     return (
         <>
-            <div className="absolute bottom-8 left-8 w-44 h-44 z-40 pointer-events-auto opacity-70 touch-none select-none">
-                <div className="relative w-full h-full">
-                    <button
-                        className="absolute top-0 left-1/2 transform -translate-x-1/2 w-14 h-14 bg-stone-800/80 rounded-t-xl border-2 border-stone-600 active:bg-amber-700 active:border-amber-500 transition-colors"
-                        onPointerDown={handleInput('forward', true)} onPointerUp={handleInput('forward', false)} onPointerLeave={handleInput('forward', false)}
-                    >W</button>
-                    <button
-                        className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-14 bg-stone-800/80 rounded-b-xl border-2 border-stone-600 active:bg-amber-700 active:border-amber-500 transition-colors"
-                        onPointerDown={handleInput('backward', true)} onPointerUp={handleInput('backward', false)} onPointerLeave={handleInput('backward', false)}
-                    >S</button>
-                    <button
-                        className="absolute left-0 top-1/2 transform -translate-y-1/2 w-14 h-14 bg-stone-800/80 rounded-l-xl border-2 border-stone-600 active:bg-amber-700 active:border-amber-500 transition-colors"
-                        onPointerDown={handleInput('left', true)} onPointerUp={handleInput('left', false)} onPointerLeave={handleInput('left', false)}
-                    >A</button>
-                    <button
-                        className="absolute right-0 top-1/2 transform -translate-y-1/2 w-14 h-14 bg-stone-800/80 rounded-r-xl border-2 border-stone-600 active:bg-amber-700 active:border-amber-500 transition-colors"
-                        onPointerDown={handleInput('right', true)} onPointerUp={handleInput('right', false)} onPointerLeave={handleInput('right', false)}
-                    >D</button>
-                </div>
+            {/* Virtual Joystick for movement */}
+            <div className="absolute bottom-8 left-8 z-40 pointer-events-auto joystick">
+                <Joystick onMove={handleJoystickMove} />
             </div>
 
+            {/* Attack/Throw button */}
             <div className="absolute inset-0 z-40 pointer-events-none touch-none select-none overflow-hidden">
                 <button
                     className="absolute top-[60%] right-20 transform -translate-y-1/2 w-28 h-28 rounded-full bg-amber-900/60 border-4 border-amber-500/40 flex items-center justify-center text-white font-bold active:scale-95 active:bg-amber-700/80 shadow-lg pointer-events-auto backdrop-blur-sm transition-transform"
@@ -410,6 +408,7 @@ const MobileControls: React.FC = () => {
                 </button>
             </div>
 
+            {/* Inventory button */}
             {!isInventoryOpen && (
                 <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto opacity-80">
                     <button
@@ -483,6 +482,12 @@ const StartMenu: React.FC = () => {
                     )}
                     <button onClick={() => setShowControls(true)} className="px-6 py-2 bg-transparent hover:bg-white/5 border border-stone-600 text-stone-400 font-serif rounded transition-all text-sm">
                         CONTROLS
+                    </button>
+                    <button
+                        onClick={() => window.open('https://forms.gle/8zQxYvZ9K3mVJYYu8', '_blank')}
+                        className="px-6 py-2 bg-transparent hover:bg-amber-900/20 border border-amber-600/40 text-amber-500/80 font-serif rounded transition-all text-sm flex items-center justify-center gap-2"
+                    >
+                        <span>💬</span> FEEDBACK
                     </button>
                 </div>
             ) : (

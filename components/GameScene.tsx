@@ -176,6 +176,11 @@ export const GameScene: React.FC = () => {
   const handleCanvasClick = () => {
     // Fallback: If user clicks canvas while playing but not locked (e.g. after Intro finishes but user didn't move mouse)
     const state = useGameStore.getState();
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    // Don't request pointer lock on mobile or when touch controls are enabled
+    if (isMobile || state.showTouchControls) return;
+
     if (state.gameState === GameState.PLAYING && !state.isInventoryOpen && !state.isPaused && !state.showTouchControls && !state.mobileInput.throwing) {
       const canvas = document.querySelector('canvas');
       if (canvas && document.pointerLockElement !== canvas) {
