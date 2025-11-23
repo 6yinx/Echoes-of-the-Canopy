@@ -304,7 +304,7 @@ export const Player: React.FC = () => {
 
     const handleInteraction = () => {
         const raycaster = new Raycaster();
-        raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+        raycaster.setFromCamera(new Vector2(0, 0), camera);
         const intersects = raycaster.intersectObjects(scene.children, true);
         const hit = intersects.find(i => i.distance < 5);
         if (hit) {
@@ -658,7 +658,7 @@ export const Player: React.FC = () => {
 
         if (!isInventoryOpen && !showTouchControls) {
             const raycaster = new Raycaster();
-            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            raycaster.setFromCamera(new Vector2(0, 0), camera);
             const intersects = raycaster.intersectObjects(scene.children, true);
             const hit = intersects.find(i => i.distance < 5);
             let text = null;
