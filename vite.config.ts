@@ -6,7 +6,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY)
+      // Use placeholder during build if API_KEY is not set (e.g., on Vercel)
+      // The actual API_KEY should be set in Vercel's environment variables
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || '__VERCEL_ENV_PLACEHOLDER__')
     },
     build: {
       outDir: 'dist',

@@ -1,6 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Only initialize if we have a real API key (not the build-time placeholder)
+const apiKey = process.env.API_KEY;
+const ai = apiKey && apiKey !== '__VERCEL_ENV_PLACEHOLDER__'
+  ? new GoogleGenAI({ apiKey })
+  : null;
 
 const SYSTEM_INSTRUCTION = `
 You are the Dungeon Master and Narrator for an atmospheric adventure game called "Echoes of the Canopy".
@@ -16,6 +20,11 @@ Rules:
 
 export const generateNarrative = async (prompt: string): Promise<string> => {
   try {
+    if (!ai) {
+      console.warn("Gemini API key not configured");
+      return "The forest remains silent... (API key not configured)";
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -25,7 +34,7 @@ export const generateNarrative = async (prompt: string): Promise<string> => {
         maxOutputTokens: 150,
       }
     });
-    
+
     return response.text || "...The wind whispers, but you cannot make out the words.";
   } catch (error) {
     console.error("Gemini API Error:", error);
