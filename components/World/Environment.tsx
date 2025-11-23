@@ -1,5 +1,4 @@
 
-
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { usePlane, useCylinder, useBox, useSphere } from '@react-three/cannon';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -32,7 +31,7 @@ const getDeterministicRotation = (id: string): [number, number, number] => {
 const Tree: React.FC<{ position: [number, number, number], scale: number, seed: number, type: number }> = ({ position, scale, seed, type }) => {
   const rotY = seededRandom(seed) * Math.PI * 2;
   const leafColor1 = useMemo(() => new THREE.Color().setHSL(0.25 + seededRandom(seed + 1) * 0.1, 0.6, 0.25), [seed]);
-  const leafColor2 = useMemo(() => new THREE.Color().setHSL(0.2 + seededRandom(seed + 2) * 0.1, 0.7, 0.3), [seed]);
+  const leafColor2 = useMemo(() => new THREE.Color().setHSL(0.2 + seededRandom(seed + 2) * 0.1, 0.5, 0.3), [seed]);
   const trunkColor = "#3e2723";
 
   // Physics Collider for Trunk
@@ -43,70 +42,71 @@ const Tree: React.FC<{ position: [number, number, number], scale: number, seed: 
     args: [0.5 * scale, 0.7 * scale, 4 * scale, 8], 
   }));
 
-  if (type === 1) { // Pine-like but detailed
+  if (type === 1) { // Detailed Pine
       return (
         <group position={position} scale={[scale, scale, scale]} rotation={[0, rotY, 0]}>
-           {/* Trunk with flared base */}
+           {/* Trunk */}
            <mesh position={[0, 1, 0]} castShadow receiveShadow>
-             <cylinderGeometry args={[0.3, 0.6, 2, 7]} />
+             <cylinderGeometry args={[0.3, 0.5, 2, 7]} />
              <meshStandardMaterial color={trunkColor} roughness={1} />
            </mesh>
-           <mesh position={[0, 3, 0]} castShadow receiveShadow>
-             <cylinderGeometry args={[0.2, 0.3, 3, 7]} />
+           {/* Taller upper trunk */}
+           <mesh position={[0, 4, 0]} castShadow receiveShadow>
+             <cylinderGeometry args={[0.15, 0.3, 6, 7]} />
              <meshStandardMaterial color={trunkColor} roughness={1} />
            </mesh>
 
-           {/* Canopy layers */}
-           <mesh position={[0, 3.5, 0]} castShadow receiveShadow>
-             <coneGeometry args={[2.5, 2.5, 8]} />
-             <meshStandardMaterial color={leafColor1} roughness={0.9} />
-           </mesh>
-           <mesh position={[0, 5, 0]} castShadow receiveShadow>
-             <coneGeometry args={[2.0, 2.5, 8]} />
-             <meshStandardMaterial color={leafColor2} roughness={0.9} />
-           </mesh>
-           <mesh position={[0, 6.5, 0]} castShadow receiveShadow>
-             <coneGeometry args={[1.5, 2.5, 8]} />
-             <meshStandardMaterial color={leafColor1} roughness={0.9} />
-           </mesh>
-           <mesh position={[0, 8, 0]} castShadow receiveShadow>
-             <coneGeometry args={[0.8, 2, 8]} />
-             <meshStandardMaterial color={leafColor2} roughness={0.9} />
-           </mesh>
+           {/* Canopy layers - Stacked Cones with slight wobble */}
+           {[0, 1, 2, 3, 4].map((i) => (
+               <mesh key={i} position={[0, 2.5 + i * 1.2, 0]} rotation={[0.05 * Math.sin(i + seed), 0, 0.05 * Math.cos(i + seed)]} castShadow receiveShadow>
+                   <coneGeometry args={[2.5 - i * 0.4, 2.0, 7]} />
+                   <meshStandardMaterial color={i % 2 === 0 ? leafColor1 : leafColor2} roughness={0.9} />
+               </mesh>
+           ))}
         </group>
       );
   }
 
-  // Broadleaf / Bushy Tree
+  // Styled Broadleaf (Cloud-like)
   return (
     <group position={position} scale={[scale, scale, scale]} rotation={[0, rotY, 0]}>
        {/* Trunk */}
        <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-         <cylinderGeometry args={[0.35, 0.5, 3, 6]} />
+         <cylinderGeometry args={[0.4, 0.6, 3, 6]} />
          <meshStandardMaterial color={trunkColor} roughness={1} />
        </mesh>
-       <mesh position={[0, 3.5, 0]} rotation={[0.2, 0, 0.1]} castShadow receiveShadow>
-         <cylinderGeometry args={[0.25, 0.35, 2, 6]} />
-         <meshStandardMaterial color={trunkColor} roughness={1} />
+       
+       {/* Branches */}
+       <mesh position={[0.3, 2.5, 0]} rotation={[0, 0, -0.5]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.2, 0.3, 1.5, 5]} />
+            <meshStandardMaterial color={trunkColor} roughness={1} />
+       </mesh>
+        <mesh position={[-0.3, 2.8, 0.2]} rotation={[0.4, 0, 0.5]} castShadow receiveShadow>
+            <cylinderGeometry args={[0.15, 0.25, 1.2, 5]} />
+            <meshStandardMaterial color={trunkColor} roughness={1} />
        </mesh>
 
-       {/* Leaf Clusters (Low Poly blobs) */}
-       <group position={[0, 4.5, 0]}>
-           <mesh position={[0, 0, 0]} scale={1.2} castShadow receiveShadow>
-               <dodecahedronGeometry args={[2, 0]} />
+       {/* Leaf Clusters (Icosahedrons for low poly aesthetic) */}
+       <group position={[0, 4, 0]}>
+           <mesh position={[0, 0, 0]} scale={1.8} castShadow receiveShadow>
+               <icosahedronGeometry args={[1, 0]} />
                <meshStandardMaterial color={leafColor1} roughness={0.8} />
            </mesh>
-           <mesh position={[1.5, 0.5, 0.5]} scale={0.8} castShadow receiveShadow>
-               <dodecahedronGeometry args={[1.8, 0]} />
+           <mesh position={[1.2, 0.5, 0.5]} scale={1.3} castShadow receiveShadow>
+               <icosahedronGeometry args={[1, 0]} />
                <meshStandardMaterial color={leafColor2} roughness={0.8} />
            </mesh>
-           <mesh position={[-1.2, 0.8, -0.5]} scale={0.9} castShadow receiveShadow>
-               <dodecahedronGeometry args={[1.9, 0]} />
+           <mesh position={[-1.2, 0.8, -0.5]} scale={1.4} castShadow receiveShadow>
+               <icosahedronGeometry args={[1, 0]} />
                <meshStandardMaterial color={leafColor2} roughness={0.8} />
            </mesh>
-           <mesh position={[0, 1.8, 0]} scale={0.7} castShadow receiveShadow>
-               <dodecahedronGeometry args={[1.5, 0]} />
+           <mesh position={[0, 1.5, 0]} scale={1.2} castShadow receiveShadow>
+               <icosahedronGeometry args={[1, 0]} />
                <meshStandardMaterial color={leafColor1} roughness={0.8} />
+           </mesh>
+           <mesh position={[0.5, -0.5, 1.2]} scale={1.0} castShadow receiveShadow>
+               <icosahedronGeometry args={[1, 0]} />
+               <meshStandardMaterial color={leafColor2} roughness={0.8} />
            </mesh>
        </group>
     </group>
@@ -123,8 +123,8 @@ const Rock: React.FC<{ position: [number, number, number], scale: number, rotati
 
   return (
     <mesh position={position} rotation={rotation} scale={scale} castShadow receiveShadow>
-      {type === 1 ? <icosahedronGeometry args={[1, 0]} /> : <dodecahedronGeometry args={[1, 0]} />}
-      <meshStandardMaterial color={type === 1 ? "#6b7280" : "#5d5753"} roughness={0.8} flatShading />
+      {type === 1 ? <icosahedronGeometry args={[1, 1]} /> : <dodecahedronGeometry args={[1, 0]} />}
+      <meshStandardMaterial color={type === 1 ? "#57534e" : "#44403c"} roughness={0.9} flatShading />
     </mesh>
   );
 };
@@ -154,7 +154,12 @@ const Stick: React.FC<{ position: [number, number, number], rotation: [number, n
     return (
         <group position={position} rotation={rotation} userData={{ type: 'stick', id }}>
             <mesh rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
-                <cylinderGeometry args={[0.03, 0.04, 0.8, 5]} />
+                <cylinderGeometry args={[0.02, 0.03, 0.8, 5]} />
+                <meshStandardMaterial color="#5d4037" />
+            </mesh>
+            {/* Tiny branch off */}
+            <mesh rotation={[Math.PI / 2, 0.5, 0]} position={[0.1, 0, 0.1]} castShadow receiveShadow>
+                 <cylinderGeometry args={[0.01, 0.015, 0.3, 4]} />
                 <meshStandardMaterial color="#5d4037" />
             </mesh>
         </group>
@@ -164,41 +169,38 @@ const Stick: React.FC<{ position: [number, number, number], rotation: [number, n
 const MushroomVariant1: React.FC = () => (
   <group>
      {/* Stalk */}
-     <mesh position={[0, 0.25, 0]} castShadow>
-       <cylinderGeometry args={[0.06, 0.08, 0.5, 6]} />
+     <mesh position={[0, 0.2, 0]} castShadow>
+       <cylinderGeometry args={[0.04, 0.06, 0.4, 6]} />
        <meshStandardMaterial color="#e5e7eb" />
      </mesh>
-     {/* Cap */}
-     <mesh position={[0, 0.5, 0]} castShadow>
-       <cylinderGeometry args={[0.05, 0.35, 0.2, 7]} /> 
-       <meshStandardMaterial color="#991b1b" />
+     {/* Cap - Flat */}
+     <mesh position={[0, 0.4, 0]} castShadow>
+       <cylinderGeometry args={[0.2, 0.02, 0.1, 7]} /> 
+       <meshStandardMaterial color="#b91c1c" />
      </mesh>
-     <mesh position={[0, 0.6, 0]} castShadow>
-       <dodecahedronGeometry args={[0.25, 0]} /> 
-       <meshStandardMaterial color="#991b1b" />
+     {/* Cap Dome */}
+     <mesh position={[0, 0.45, 0]} castShadow>
+       <sphereGeometry args={[0.15, 6, 4]} /> 
+       <meshStandardMaterial color="#b91c1c" />
      </mesh>
-     {/* Spots */}
-     <mesh position={[0.15, 0.6, 0.1]} castShadow><icosahedronGeometry args={[0.03, 0]} /><meshStandardMaterial color="#fefce8" /></mesh>
-     <mesh position={[-0.1, 0.65, 0.15]} castShadow><icosahedronGeometry args={[0.03, 0]} /><meshStandardMaterial color="#fefce8" /></mesh>
-     <mesh position={[0, 0.62, -0.2]} castShadow><icosahedronGeometry args={[0.03, 0]} /><meshStandardMaterial color="#fefce8" /></mesh>
+     {/* Glowing Spots */}
+     <mesh position={[0.08, 0.5, 0.05]}><icosahedronGeometry args={[0.02, 0]} /><meshBasicMaterial color="#fefce8" toneMapped={false} /></mesh>
+     <mesh position={[-0.08, 0.48, 0.08]}><icosahedronGeometry args={[0.02, 0]} /><meshBasicMaterial color="#fefce8" toneMapped={false} /></mesh>
   </group>
 );
 
 const MushroomVariant2: React.FC = () => (
   <group>
-      {/* Cluster of 3 small mushrooms */}
-     <group position={[0, 0, 0]}>
-         <mesh position={[0, 0.2, 0]} castShadow><cylinderGeometry args={[0.03, 0.04, 0.4, 5]} /><meshStandardMaterial color="#d6d3d1" /></mesh>
-         <mesh position={[0, 0.4, 0]} castShadow><dodecahedronGeometry args={[0.15, 0]} /><meshStandardMaterial color="#5d4037" /></mesh>
-     </group>
-     <group position={[0.2, 0, 0.1]} scale={0.7} rotation={[0.1, 0, 0.2]}>
-         <mesh position={[0, 0.2, 0]} castShadow><cylinderGeometry args={[0.03, 0.04, 0.4, 5]} /><meshStandardMaterial color="#d6d3d1" /></mesh>
-         <mesh position={[0, 0.4, 0]} castShadow><dodecahedronGeometry args={[0.15, 0]} /><meshStandardMaterial color="#5d4037" /></mesh>
-     </group>
-     <group position={[-0.15, 0, 0.15]} scale={0.5} rotation={[-0.1, 0, -0.1]}>
-         <mesh position={[0, 0.2, 0]} castShadow><cylinderGeometry args={[0.03, 0.04, 0.4, 5]} /><meshStandardMaterial color="#d6d3d1" /></mesh>
-         <mesh position={[0, 0.4, 0]} castShadow><dodecahedronGeometry args={[0.15, 0]} /><meshStandardMaterial color="#5d4037" /></mesh>
-     </group>
+     {/* Tall Neon Mushroom */}
+     <mesh position={[0, 0.3, 0]} castShadow>
+       <cylinderGeometry args={[0.02, 0.04, 0.6, 5]} />
+       <meshStandardMaterial color="#3f3f46" />
+     </mesh>
+     <mesh position={[0, 0.6, 0]} castShadow>
+       <coneGeometry args={[0.15, 0.4, 6]} />
+       <meshStandardMaterial color="#06b6d4" emissive="#06b6d4" emissiveIntensity={0.5} />
+     </mesh>
+     <pointLight position={[0, 0.5, 0]} color="#06b6d4" distance={1} intensity={0.5} decay={2} />
   </group>
 );
 
@@ -215,16 +217,16 @@ const Bush: React.FC<{ position: [number, number, number], scale: number, colorH
     
     const clusters = useMemo(() => {
         const c = [];
-        const count = 6 + Math.floor(seededRandom(seed) * 3);
+        const count = 5 + Math.floor(seededRandom(seed) * 4);
         for(let i=0; i<count; i++) {
             c.push({
                 pos: [
-                    (seededRandom(seed+i)-0.5) * 0.8,
-                    0.3 + seededRandom(seed+i*2) * 0.5,
-                    (seededRandom(seed+i*3)-0.5) * 0.8
+                    (seededRandom(seed+i)-0.5) * 1.0,
+                    0.2 + seededRandom(seed+i*2) * 0.6,
+                    (seededRandom(seed+i*3)-0.5) * 1.0
                 ] as [number, number, number],
-                scale: 0.3 + seededRandom(seed+i*4) * 0.4,
-                rot: [seededRandom(seed+i*5), seededRandom(seed+i*6), seededRandom(seed+i*7)] as [number, number, number]
+                scale: 0.4 + seededRandom(seed+i*4) * 0.5,
+                rot: [seededRandom(seed+i*5) * Math.PI, seededRandom(seed+i*6) * Math.PI, seededRandom(seed+i*7) * Math.PI] as [number, number, number]
             })
         }
         return c;
@@ -232,49 +234,33 @@ const Bush: React.FC<{ position: [number, number, number], scale: number, colorH
 
     return (
         <group position={position} scale={scale} userData={{ type: 'bush', bushType, searched: false }}>
-            {/* Branches underneath */}
-             <mesh position={[0, 0.2, 0]} rotation={[0.1, 0, 0.1]} castShadow>
-                <cylinderGeometry args={[0.04, 0.06, 0.6]} />
-                <meshStandardMaterial color="#4a3728" />
-             </mesh>
-             <mesh position={[0.1, 0.2, 0.1]} rotation={[0, 0, -0.4]} castShadow>
-                <cylinderGeometry args={[0.03, 0.04, 0.5]} />
-                <meshStandardMaterial color="#4a3728" />
-             </mesh>
-             <mesh position={[-0.1, 0.25, -0.1]} rotation={[0.4, 0, 0]} castShadow>
-                <cylinderGeometry args={[0.02, 0.03, 0.4]} />
-                <meshStandardMaterial color="#4a3728" />
-             </mesh>
-
-            {/* Leaf Clusters */}
+            {/* Leaf Clusters - Icosahedrons for better shape */}
             {clusters.map((c, i) => (
                 <mesh key={i} position={c.pos} rotation={c.rot} scale={c.scale} castShadow receiveShadow>
-                    <dodecahedronGeometry args={[1, 0]} />
-                    <meshStandardMaterial color={colorHex} roughness={0.8} />
+                    <icosahedronGeometry args={[0.6, 0]} />
+                    <meshStandardMaterial color={colorHex} roughness={0.9} flatShading />
                 </mesh>
             ))}
 
             {/* Berries */}
             {bushType === 'berry_red' && (
                 <>
-                    <mesh position={[0.3, 0.6, 0.3]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#ef4444" /></mesh>
-                    <mesh position={[-0.2, 0.5, 0.4]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#ef4444" /></mesh>
-                    <mesh position={[0.1, 0.7, -0.3]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#ef4444" /></mesh>
-                    <mesh position={[-0.3, 0.4, -0.2]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#ef4444" /></mesh>
+                    <mesh position={[0.3, 0.6, 0.3]} castShadow><dodecahedronGeometry args={[0.08]} /><meshStandardMaterial color="#ef4444" /></mesh>
+                    <mesh position={[-0.2, 0.5, 0.4]} castShadow><dodecahedronGeometry args={[0.08]} /><meshStandardMaterial color="#ef4444" /></mesh>
+                    <mesh position={[0.1, 0.7, -0.3]} castShadow><dodecahedronGeometry args={[0.08]} /><meshStandardMaterial color="#ef4444" /></mesh>
                 </>
             )}
             {bushType === 'berry_blue' && (
                 <>
-                    <mesh position={[0.3, 0.6, 0.3]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#3b82f6" /></mesh>
-                    <mesh position={[-0.2, 0.5, 0.4]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#3b82f6" /></mesh>
-                    <mesh position={[0.1, 0.7, -0.3]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#3b82f6" /></mesh>
-                    <mesh position={[-0.3, 0.4, -0.2]} castShadow><sphereGeometry args={[0.08]} /><meshStandardMaterial color="#3b82f6" /></mesh>
+                    <mesh position={[0.3, 0.6, 0.3]} castShadow><dodecahedronGeometry args={[0.08]} /><meshStandardMaterial color="#3b82f6" /></mesh>
+                    <mesh position={[-0.2, 0.5, 0.4]} castShadow><dodecahedronGeometry args={[0.08]} /><meshStandardMaterial color="#3b82f6" /></mesh>
                 </>
             )}
         </group>
     )
 }
 
+// Low-Poly Tulip-like Flowers
 export const Flowers: React.FC<{ data: any[] }> = ({ data }) => {
     const mesh = useRef<THREE.InstancedMesh>(null);
     const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -282,7 +268,7 @@ export const Flowers: React.FC<{ data: any[] }> = ({ data }) => {
     React.useLayoutEffect(() => {
         if (!mesh.current) return;
         data.forEach((d, i) => {
-            dummy.position.set(d.x, 0, d.z);
+            dummy.position.set(d.x, 0.15 * d.scale, d.z);
             dummy.scale.setScalar(d.scale);
             dummy.rotation.set(0, Math.random() * Math.PI, 0);
             dummy.updateMatrix();
@@ -294,9 +280,10 @@ export const Flowers: React.FC<{ data: any[] }> = ({ data }) => {
     }, [data, dummy]);
 
     return (
-        <instancedMesh ref={mesh} args={[undefined, undefined, data.length]}>
-            <sphereGeometry args={[0.2, 8, 8]} />
-            <meshStandardMaterial />
+        <instancedMesh ref={mesh} args={[undefined, undefined, data.length]} castShadow>
+            {/* Inverted Cone for Flower Cup */}
+            <coneGeometry args={[0.15, 0.3, 5, 1, true]} />
+            <meshStandardMaterial side={THREE.DoubleSide} />
         </instancedMesh>
     );
 }
@@ -332,21 +319,16 @@ export const GrassClumps: React.FC<{ data: any[] }> = ({ data }) => {
             `
             #include <begin_vertex>
             
-            // Advanced Wind Physics
-            float heightFactor = position.y + 0.2; // Normalize approximate height (0.0 to 0.6)
-            
+            float heightFactor = position.y + 0.2;
             vec4 worldPos = instanceMatrix * vec4(position, 1.0);
             float x = worldPos.x;
             float z = worldPos.z;
-            
             float time = uTime * 1.5;
             
-            // Multi-frequency wind simulation
             float mainFlow = sin(x * 0.05 + z * 0.05 + time);
             float turbulence = sin(x * 0.2 - z * 0.1 + time * 2.5 + mainFlow);
-            float gust = sin(time * 0.5 + x * 0.02) * 0.5 + 0.5; // low freq gusts
+            float gust = sin(time * 0.5 + x * 0.02) * 0.5 + 0.5;
             
-            // Non-linear bending (tips bend more)
             float bendAmount = heightFactor * heightFactor; 
             
             float offsetX = (mainFlow * 0.15 + turbulence * 0.05) * bendAmount * (0.8 + gust);
@@ -354,8 +336,6 @@ export const GrassClumps: React.FC<{ data: any[] }> = ({ data }) => {
             
             transformed.x += offsetX;
             transformed.z += offsetZ;
-            
-            // Slight vertical dip to preserve length appearance during strong bends
             transformed.y -= (abs(offsetX) + abs(offsetZ)) * 0.2;
             `
         );
@@ -372,6 +352,89 @@ export const GrassClumps: React.FC<{ data: any[] }> = ({ data }) => {
                 color="#3f6212" 
                 onBeforeCompile={handleOnBeforeCompile}
             />
+        </instancedMesh>
+    );
+}
+
+// --- Fauna ---
+
+const Rabbit: React.FC<{ position: [number, number, number], rotation: number }> = ({ position, rotation }) => {
+    const group = useRef<THREE.Group>(null);
+    useFrame((state) => {
+        if(!group.current) return;
+        const t = state.clock.getElapsedTime();
+        const offset = position[0] * 0.5 + position[2] * 0.5;
+        // Periodic hop
+        const cycle = (t + offset) % 4; // 4 second cycle
+        if (cycle < 0.5) {
+            // Hop up
+            const hopHeight = Math.sin(cycle * Math.PI * 2) * 0.3;
+            group.current.position.y = position[1] + Math.max(0, hopHeight);
+        } else {
+            group.current.position.y = position[1];
+        }
+    })
+    
+    return (
+        <group ref={group} position={position} rotation={[0, rotation, 0]}>
+             {/* Body */}
+             <mesh position={[0, 0.15, 0]} castShadow>
+                 <boxGeometry args={[0.25, 0.25, 0.35]} />
+                 <meshStandardMaterial color="#e7e5e4" />
+             </mesh>
+             {/* Head */}
+             <mesh position={[0, 0.3, 0.2]} castShadow>
+                 <boxGeometry args={[0.18, 0.18, 0.18]} />
+                 <meshStandardMaterial color="#e7e5e4" />
+             </mesh>
+             {/* Ears */}
+             <mesh position={[0.05, 0.45, 0.2]} castShadow>
+                 <boxGeometry args={[0.04, 0.15, 0.04]} />
+                 <meshStandardMaterial color="#e7e5e4" />
+             </mesh>
+             <mesh position={[-0.05, 0.45, 0.2]} castShadow>
+                 <boxGeometry args={[0.04, 0.15, 0.04]} />
+                 <meshStandardMaterial color="#e7e5e4" />
+             </mesh>
+             {/* Tail */}
+             <mesh position={[0, 0.15, -0.2]} castShadow>
+                 <boxGeometry args={[0.08, 0.08, 0.08]} />
+                 <meshStandardMaterial color="#f5f5f4" />
+             </mesh>
+        </group>
+    )
+}
+
+const Butterflies: React.FC<{ data: any[] }> = ({ data }) => {
+    const mesh = useRef<THREE.InstancedMesh>(null);
+    const dummy = useMemo(() => new THREE.Object3D(), []);
+    
+    useFrame((state) => {
+        if (!mesh.current) return;
+        const t = state.clock.getElapsedTime();
+        data.forEach((d, i) => {
+            // Float around base position
+            const x = d.x + Math.sin(t * d.speed + i) * 0.5;
+            const y = d.y + Math.cos(t * d.speed * 0.5 + i) * 0.2;
+            const z = d.z + Math.cos(t * d.speed + i) * 0.5;
+            
+            dummy.position.set(x, y, z);
+            // Flapping rotation
+            dummy.rotation.set(Math.sin(t * 15 + i) * 0.5, t * 0.5 + i, Math.sin(t * 15 + i) * 0.5);
+            dummy.scale.setScalar(0.1);
+            dummy.updateMatrix();
+            mesh.current!.setMatrixAt(i, dummy.matrix);
+            mesh.current!.setColorAt(i, new THREE.Color(d.color));
+        });
+        mesh.current.instanceMatrix.needsUpdate = true;
+        if(mesh.current.instanceColor) mesh.current.instanceColor.needsUpdate = true;
+    });
+
+    return (
+        <instancedMesh ref={mesh} args={[undefined, undefined, data.length]}>
+            {/* Simple Triangle Wing Shape */}
+            <circleGeometry args={[1, 3]} />
+            <meshBasicMaterial side={THREE.DoubleSide} transparent opacity={0.8} />
         </instancedMesh>
     );
 }
@@ -415,50 +478,11 @@ export const FloatingDust: React.FC<{ position: [number, number, number] }> = ({
   )
 }
 
-export const Fireflies: React.FC<{ position: [number, number, number] }> = ({ position }) => {
-  const mesh = useRef<THREE.InstancedMesh>(null);
-  const count = 8; 
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-
-  const particles = useMemo(() => {
-    return new Array(count).fill(0).map(() => ({
-      x: (Math.random() - 0.5) * 100,
-      y: 0.5 + Math.random() * 2,
-      z: (Math.random() - 0.5) * 100,
-      speed: 0.005 + Math.random() * 0.01,
-      offset: Math.random() * 100
-    }));
-  }, []);
-
-  useFrame((state) => {
-    if (!mesh.current) return;
-    const time = state.clock.getElapsedTime();
-    particles.forEach((p, i) => {
-      const y = p.y + Math.sin(time * p.speed * 100 + p.offset) * 0.2;
-      const x = p.x + Math.sin(time * 0.2 + p.offset) * 2;
-      const z = p.z + Math.cos(time * 0.2 + p.offset) * 2;
-      
-      dummy.position.set(x + position[0], y, z + position[2]);
-      dummy.scale.setScalar(0.1 + Math.sin(time * 5 + p.offset) * 0.05);
-      dummy.updateMatrix();
-      mesh.current!.setMatrixAt(i, dummy.matrix);
-    });
-    mesh.current.instanceMatrix.needsUpdate = true;
-  });
-
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, count]}>
-       <sphereGeometry args={[0.3, 4, 4]} />
-       <meshBasicMaterial color="#fbbf24" transparent opacity={0.8} />
-    </instancedMesh>
-  );
-};
-
 // --- Dynamic Items (Dropped by Player) ---
 const DroppedBerry: React.FC<{ position: [number, number, number], color: string, id: string, type: string }> = ({ position, color, id, type }) => (
     <group position={position} userData={{ type, id }}>
         <mesh castShadow receiveShadow>
-            <sphereGeometry args={[0.08]} />
+            <dodecahedronGeometry args={[0.08, 0]} />
             <meshStandardMaterial color={color} />
         </mesh>
     </group>
@@ -522,12 +546,8 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
     
     useEffect(() => {
         const spawn = () => {
-            // Get player direction
             const dir = new THREE.Vector3();
             camera.getWorldDirection(dir);
-
-            // Determine determining side based on looking direction
-            // 0: +Z (South), 1: -Z (North), 2: +X (East), 3: -X (West)
             let targetSide = 0;
             if (Math.abs(dir.x) > Math.abs(dir.z)) {
                 targetSide = dir.x > 0 ? 2 : 3;
@@ -535,13 +555,12 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
                 targetSide = dir.z > 0 ? 0 : 1;
             }
 
-            // 75% chance to spawn in front of player, 25% random
             let side = targetSide;
             if (Math.random() > 0.75) {
                 side = Math.floor(Math.random() * 4);
             }
 
-            const edge = limit - 0.2; // Very close to the edge
+            const edge = limit - 0.2; 
             const range = limit - 10;
             const offset = (Math.random() - 0.5) * 2 * range;
             
@@ -551,19 +570,19 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
             switch(side) {
                 case 0: // +Z barrier
                    p = [offset, 2.5, edge];
-                   r = [0, Math.PI, 0]; // Face -Z (towards center)
+                   r = [0, Math.PI, 0];
                    break;
                 case 1: // -Z barrier
                    p = [offset, 2.5, -edge];
-                   r = [0, 0, 0]; // Face +Z (towards center)
+                   r = [0, 0, 0];
                    break;
                 case 2: // +X barrier
                    p = [edge, 2.5, offset];
-                   r = [0, -Math.PI / 2, 0]; // Face -X (towards center)
+                   r = [0, -Math.PI / 2, 0];
                    break;
                 case 3: // -X barrier
                    p = [-edge, 2.5, offset];
-                   r = [0, Math.PI / 2, 0]; // Face +X (towards center)
+                   r = [0, Math.PI / 2, 0];
                    break;
                 default:
                    p = [0, -500, 0];
@@ -574,7 +593,7 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
         };
 
         spawn(); // Initial spawn
-        const interval = setInterval(spawn, 60000); // Respawn every 60 seconds
+        const interval = setInterval(spawn, 60000); 
         return () => clearInterval(interval);
     }, [limit, camera]);
 
@@ -585,19 +604,13 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
         const dz = playerPos[2] - pos[2];
         const distSq = dx*dx + dy*dy + dz*dz;
         
-        // Check if player is near/inside
         if (distSq < 2.0 && pos[1] > -100) {
-            // Player entered
             addLog("The world shifts as you step through the darkness.", "Narrator");
             setNotification("Entered the Void");
-            
-            // Random teleport
             const safeRange = limit * 0.6;
             const rX = (Math.random() - 0.5) * 2 * safeRange;
             const rZ = (Math.random() - 0.5) * 2 * safeRange;
             teleportPlayer([rX, 5, rZ]);
-            
-            // Hide door
             setPos([0, -500, 0]);
         }
     });
@@ -608,7 +621,6 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
                 <planeGeometry args={[3, 5]} />
                 <meshBasicMaterial color="black" side={THREE.DoubleSide} />
             </mesh>
-             {/* Subtle emission to make it look unnatural */}
             <pointLight color="#a855f7" intensity={2} distance={8} decay={2} position={[0, 0, 0.2]} />
         </group>
     );
@@ -637,6 +649,8 @@ interface ChunkData {
   bushes: any[];
   sticks: any[];
   smallRocks: any[];
+  rabbits: any[];
+  butterflies: any[];
 }
 
 const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
@@ -651,6 +665,8 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
       const _bushes = [];
       const _sticks = [];
       const _smallRocks = [];
+      const _rabbits = [];
+      const _butterflies = [];
       
       const offsetX = x * CHUNK_SIZE;
       const offsetZ = z * CHUNK_SIZE;
@@ -674,7 +690,7 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
       };
 
       // Trees
-      const treeCount = Math.floor(12 + seededRandom(seed + 1) * 6);
+      const treeCount = Math.floor(10 + seededRandom(seed + 1) * 6);
       for(let i=0; i<treeCount; i++) {
          const lx = (seededRandom(seed + i * 2) - 0.5) * CHUNK_SIZE;
          const lz = (seededRandom(seed + i * 3) - 0.5) * CHUNK_SIZE;
@@ -688,17 +704,6 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
          const type = seededRandom(seed + i * 99) > 0.6 ? 1 : 0; 
          _trees.push({ position: [wx, 0, wz] as [number, number, number], scale, seed: seed + i, type });
          placedObjects.push({ x: wx, z: wz, r: radius * 0.8 });
-
-         if (seededRandom(seed + i * 5) > 0.6) {
-             const mCount = 1 + Math.floor(seededRandom(seed + i) * 2);
-             for (let m=0; m<mCount; m++) {
-                 _mushrooms.push({
-                     position: [wx + (seededRandom(seed+m)-0.5)*3, 0, wz + (seededRandom(seed+m+1)-0.5)*3] as [number, number, number],
-                     type: seededRandom(seed+m) > 0.5 ? 0 : 1,
-                     scale: 0.3 + seededRandom(seed+m) * 0.3
-                 });
-             }
-         }
       }
 
       // Rocks
@@ -721,16 +726,6 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
              type
          });
          placedObjects.push({ x: wx, z: wz, r: radius });
-
-         // Spawn small rocks around big rock
-         const smallCount = Math.floor(seededRandom(seed + i * 99) * 3) + 2; 
-         for(let k=0; k<smallCount; k++) {
-            const angle = seededRandom(seed + k * 100) * Math.PI * 2;
-            const dist = radius + 0.5 + seededRandom(seed + k * 101) * 1.5;
-            _smallRocks.push({
-                 position: [wx + Math.cos(angle)*dist, 0.05, wz + Math.sin(angle)*dist] as [number, number, number]
-            });
-         }
       }
 
       // Sticks
@@ -744,7 +739,19 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
           });
       }
 
-      // Scattered Random Small Rocks 
+      // Mushrooms
+      const mushroomCount = Math.floor(5 + seededRandom(seed + 50) * 5);
+      for(let i=0; i<mushroomCount; i++) {
+          const lx = (seededRandom(seed + i * 50) - 0.5) * CHUNK_SIZE;
+          const lz = (seededRandom(seed + i * 51) - 0.5) * CHUNK_SIZE;
+          _mushrooms.push({
+               position: [offsetX + lx, 0, offsetZ + lz],
+               type: seededRandom(seed + i * 52) > 0.7 ? 1 : 0,
+               scale: 0.5 + seededRandom(seed + i * 53) * 0.5
+          });
+      }
+
+      // Small Rocks 
       const smallRockCount = Math.floor(5 + seededRandom(seed + 70) * 3);
       for(let i=0; i<smallRockCount; i++) {
           const lx = (seededRandom(seed + i * 70) - 0.5) * CHUNK_SIZE;
@@ -764,7 +771,6 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
           
           if (!isPositionValid(wx, wz, 0.5)) continue;
 
-          // Determine bush type
           const typeRand = seededRandom(seed + i * 24);
           let bushType = 'empty';
           if (typeRand > 0.7) bushType = 'berry_red';
@@ -787,11 +793,11 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
               x: offsetX + lx,
               z: offsetZ + lz,
               scale: 0.3 + seededRandom(seed + i * 32) * 0.4,
-              color: seededRandom(seed + i * 33) > 0.5 ? '#fb923c' : '#fcd34d' 
+              color: seededRandom(seed + i * 33) > 0.5 ? '#f43f5e' : '#fbbf24' 
           });
       }
 
-      // Grass - Increased Density
+      // Grass
       const grassCount = Math.floor(4000 + seededRandom(seed + 40) * 1000);
       for(let i=0; i<grassCount; i++) {
           const lx = (seededRandom(seed + i * 40) - 0.5) * CHUNK_SIZE;
@@ -803,7 +809,32 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
           });
       }
 
-      return { trees: _trees, rocks: _rocks, flowers: _flowers, grass: _grass, mushrooms: _mushrooms, bushes: _bushes, sticks: _sticks, smallRocks: _smallRocks };
+      // Rabbits
+      const rabbitCount = seededRandom(seed + 80) > 0.7 ? 1 : 0;
+      for (let i = 0; i < rabbitCount; i++) {
+          const lx = (seededRandom(seed + i * 80) - 0.5) * CHUNK_SIZE;
+          const lz = (seededRandom(seed + i * 81) - 0.5) * CHUNK_SIZE;
+          _rabbits.push({
+              position: [offsetX + lx, 0, offsetZ + lz],
+              rotation: seededRandom(seed + i * 82) * Math.PI * 2
+          });
+      }
+
+      // Butterflies
+      const butterflyCount = Math.floor(seededRandom(seed + 90) * 10);
+      for (let i = 0; i < butterflyCount; i++) {
+           const lx = (seededRandom(seed + i * 90) - 0.5) * CHUNK_SIZE;
+           const lz = (seededRandom(seed + i * 91) - 0.5) * CHUNK_SIZE;
+           _butterflies.push({
+               x: offsetX + lx,
+               y: 1 + seededRandom(seed + i) * 2,
+               z: offsetZ + lz,
+               speed: 1 + seededRandom(seed + i) * 2,
+               color: seededRandom(seed + i * 92) > 0.5 ? '#60a5fa' : '#c084fc'
+           });
+      }
+
+      return { trees: _trees, rocks: _rocks, flowers: _flowers, grass: _grass, mushrooms: _mushrooms, bushes: _bushes, sticks: _sticks, smallRocks: _smallRocks, rabbits: _rabbits, butterflies: _butterflies };
   }, [x, z]);
 
   return (
@@ -814,9 +845,10 @@ const Chunk: React.FC<{ x: number, z: number }> = ({ x, z }) => {
        {chunkData.sticks.map((s, i) => <Stick key={i} {...s} />)}
        {chunkData.smallRocks.map((s, i) => <SmallRock key={i} {...s} />)}
        {chunkData.bushes.map((b, i) => <Bush key={i} {...b} />)}
+       {chunkData.rabbits.map((r, i) => <Rabbit key={i} position={r.position} rotation={r.rotation} />)}
        <Flowers data={chunkData.flowers} />
        <GrassClumps data={chunkData.grass} />
-       <Fireflies position={[x * CHUNK_SIZE, 0, z * CHUNK_SIZE]} />
+       <Butterflies data={chunkData.butterflies} />
        <FloatingDust position={[x * CHUNK_SIZE, 0, z * CHUNK_SIZE]} />
     </group>
   )
