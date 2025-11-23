@@ -333,7 +333,8 @@ const WakeUpOverlay: React.FC = () => {
             <div className="absolute top-0 left-0 w-full bg-black animate-[wakeUpBlinkTop_9s_ease-out_forwards]" style={{ height: '50%' }}></div>
             <div className="absolute bottom-0 left-0 w-full bg-black animate-[wakeUpBlinkBottom_9s_ease-out_forwards]" style={{ height: '50%' }}></div>
 
-            <style jsx>{`
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes wakeUpBlinkTop {
                     0% { height: 50%; }
                     20% { height: 50%; }
@@ -354,7 +355,7 @@ const WakeUpOverlay: React.FC = () => {
                     85% { height: 0%; }  
                     100% { height: 0%; }
                 }
-            `}</style>
+            `}} />
         </div>
     )
 }
@@ -562,12 +563,13 @@ const NotificationDisplay: React.FC = () => {
             <div className="bg-black/60 border border-amber-500/30 text-amber-100 px-6 py-2 rounded-full font-serif text-sm shadow-lg backdrop-blur-sm animate-[fadeInDown_0.3s_ease-out]">
                 {notification}
             </div>
-            <style jsx>{`
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes fadeInDown {
                     from { opacity: 0; transform: translateY(-20px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
-            `}</style>
+            `}} />
         </div>
     )
 }
