@@ -26,6 +26,30 @@
         background: rgba(255, 255, 255, 0.2);
         border-radius: 4px;
       }
+      @keyframes wakeUpBlinkTop {
+        0% { height: 50%; }
+        20% { height: 50%; }
+        30% { height: 20%; }
+        40% { height: 50%; }
+        55% { height: 10%; }
+        65% { height: 50%; }
+        85% { height: 0%; }
+        100% { height: 0%; }
+      }
+      @keyframes wakeUpBlinkBottom {
+        0% { height: 50%; }
+        20% { height: 50%; }
+        30% { height: 20%; }
+        40% { height: 50%; }
+        55% { height: 10%; }
+        65% { height: 50%; }
+        85% { height: 0%; }
+        100% { height: 0%; }
+      }
+      @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     </style>
   <script type="importmap">
 {
