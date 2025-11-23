@@ -23,24 +23,6 @@ To wake up, you must survive, explore the infinite anomaly, and find the glitche
 *   **Crafting:** The system renders primitive objects like rocks and sticks. Use them to create tools.
 *   **AI Narrator:** The system observes you. Using the Gemini API, the game narrates your journey and examines objects with a mysterious, melancholic tone.
 
-## Survival Tips
-
-### Health & Hunger System
-*   **Mushrooms Are Life-Savers:** Eating mushrooms instantly restores **+15 hunger** and can trigger health regeneration. Always keep some in your inventory for emergencies!
-*   **Health Regeneration:** When your hunger is above **90%**, your health will slowly regenerate over time. Stay well-fed to heal naturally.
-*   **Starvation Warning:** If hunger drops to **0**, you'll start losing health rapidly. Don't let yourself starve!
-*   **Smart Inventory Management:** Save mushrooms in your inventory instead of eating them immediately. You never know when you'll need that emergency heal.
-
-### Resource Management
-*   **Collect Everything:** Gather sticks and rocks to craft essential tools and weapons
-*   **Lantern Usage:** Press **Q** (or use the lantern button on mobile) to illuminate dark areas and see better at night
-*   **Sprint Wisely:** Double-tap **W** to sprint, but remember it drains stamina quickly. Use it strategically!
-
-### Exploration
-*   **Mysterious Doors:** Black rectangular portals appear randomly on reality barriers—interact with them to teleport to new areas
-*   **Bush Searching:** Search bushes to find berries and sticks. Some bushes contain red or blue berries!
-*   **AI Observation:** The system's AI narrator watches your journey and provides cryptic commentary on your actions
-
 ## Controls
 
 ### Desktop
@@ -58,7 +40,7 @@ To wake up, you must survive, explore the infinite anomaly, and find the glitche
 *   **Virtual Joystick:** Move
 *   **Swipe:** Look
 *   **Tap Screen:** Interact
-*   **Buttons:** Inventory, Lantern, Attack
+*   **Buttons:** Inventory, Jump, Attack
 
 ## Tech Stack
 *   **Engine:** React + Three.js (@react-three/fiber)
