@@ -428,9 +428,15 @@ const StartMenu: React.FC = () => {
     const setShowIntro = useGameStore(state => state.setShowIntro);
     const loadGame = useGameStore(state => state.loadGame);
     const resetGame = useGameStore(state => state.resetGame);
-    const hasSave = useGameStore(state => state.hasSaveFile());
+    const hasSaveFile = useGameStore(state => state.hasSaveFile);
 
     const [showControls, setShowControls] = useState(false);
+    const [hasSave, setHasSave] = useState(false);
+
+    useEffect(() => {
+        // Check for save file on mount
+        hasSaveFile().then(setHasSave);
+    }, [hasSaveFile]);
 
     const handleNewGame = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -443,12 +449,14 @@ const StartMenu: React.FC = () => {
 
     const handleLoadGame = (e: React.MouseEvent) => {
         e.preventDefault();
-        if (loadGame()) {
-            setTimeout(() => {
-                setShowIntro(false);
-                setGameState(GameState.LOADING);
-            }, 50);
-        }
+        loadGame().then((success) => {
+            if (success) {
+                setTimeout(() => {
+                    setShowIntro(false);
+                    setGameState(GameState.LOADING);
+                }, 50);
+            }
+        });
     }
 
     return (
