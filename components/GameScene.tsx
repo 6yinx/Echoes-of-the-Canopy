@@ -72,10 +72,12 @@ const SceneContent = () => {
   return (
     <>
       {/* Render atmosphere based on current map */}
-      {currentMap === MapLocation.FOREST ? (
-        <EveningAtmosphere />
-      ) : (
-        <OfficeMap />
+      {currentMap === MapLocation.FOREST && <EveningAtmosphere />}
+      {currentMap === MapLocation.OFFICE && (
+        <>
+          <ambientLight intensity={0.3} color="#FFFACD" />
+          <fog attach="fog" args={['#F5F5DC', 20, 80]} />
+        </>
       )}
 
       {/* Render Physics when Playing OR Loading OR Intro (to settle) */}
@@ -94,9 +96,7 @@ const SceneContent = () => {
             <VisualGround />
           </>
         ) : (
-          <>
-            {/* Office has its own ground in OfficeMap component */}
-          </>
+          <OfficeMap />
         )}
 
         <DynamicItems />
