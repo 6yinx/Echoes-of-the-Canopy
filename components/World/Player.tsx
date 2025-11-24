@@ -810,14 +810,39 @@ export const Player: React.FC = () => {
     return (
         <>
             <group ref={ref as any}>
+                {/* Physics body */}
+            </group>
+
+            {/* Flashlight attached to camera view (via heldItemRef which follows camera) */}
+            <group ref={heldItemRef}>
                 {isLanternActive && (
-                    <group position={[0, 0.5, 0]}>
-                        <pointLight intensity={30} distance={120} color="#ffffaa" castShadow decay={2} />
-                        <spotLight intensity={50} distance={150} angle={0.8} penumbra={0.5} color="#fff176" position={[0, 0, 0]} target={camera} castShadow />
+                    <group>
+                        {/* Flashlight beam */}
+                        <spotLight
+                            position={[0.2, -0.2, 0]} // Slightly offset to look like held/shoulder light
+                            angle={0.6}
+                            penumbra={0.2}
+                            intensity={100}
+                            distance={80}
+                            color="#ffffff"
+                            castShadow
+                            target-position={[0, 0, -10]} // Points forward relative to camera
+                        />
+                        {/* Inner bright core */}
+                        <spotLight
+                            position={[0.2, -0.2, 0]}
+                            angle={0.3}
+                            penumbra={0.1}
+                            intensity={150}
+                            distance={100}
+                            color="#e0f2fe" // Blue-ish white
+                            target-position={[0, 0, -10]}
+                        />
+                        {/* Ambient spill */}
+                        <pointLight position={[0, 0, 0]} intensity={2} distance={5} color="#ffffff" decay={2} />
                     </group>
                 )}
-            </group>
-            <group ref={heldItemRef}>
+
                 {activeItem?.type === 'small_rock' && <HeldRock />}
                 {activeItem?.type === 'stick' && <HeldStick />}
                 {activeItem?.type === 'mushroom' && <HeldMushroom />}

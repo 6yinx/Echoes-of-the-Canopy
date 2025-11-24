@@ -572,21 +572,21 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
             let r: [number, number, number];
 
             switch (side) {
-                case 0: // +Z barrier
+                case 0: // +Z barrier (North)
                     p = [offset, 2.5, edge];
-                    r = [0, Math.PI, 0];
+                    r = [0, Math.PI, 0]; // Face South (-Z)
                     break;
-                case 1: // -Z barrier
+                case 1: // -Z barrier (South)
                     p = [offset, 2.5, -edge];
-                    r = [0, 0, 0];
+                    r = [0, 0, 0]; // Face North (+Z)
                     break;
-                case 2: // +X barrier
+                case 2: // +X barrier (East)
                     p = [edge, 2.5, offset];
-                    r = [0, -Math.PI / 2, 0];
+                    r = [0, -Math.PI / 2, 0]; // Face West (-X)
                     break;
-                case 3: // -X barrier
+                case 3: // -X barrier (West)
                     p = [-edge, 2.5, offset];
-                    r = [0, Math.PI / 2, 0];
+                    r = [0, Math.PI / 2, 0]; // Face East (+X)
                     break;
                 default:
                     p = [0, -500, 0];
@@ -614,7 +614,8 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
         const distSq = dx * dx + dy * dy + dz * dz;
 
         // Touch-based entry - automatic when player gets close
-        if (distSq < 4.0 && pos[1] > -100) { // Within 2 units and door is visible
+        // Increased radius to 3 units (distSq < 9.0) for easier entry
+        if (distSq < 9.0 && pos[1] > -100) { // Within 2 units and door is visible
             setHasTriggered(true); // Mark as triggered
             addLog("You step through the mysterious door into an endless office...", "Narrator");
             setGameState(GameState.LOADING); // Trigger loading screen
