@@ -147,25 +147,50 @@ export const OfficeFurniture: React.FC = () => {
 // Complete Office Map
 export const OfficeMap: React.FC = () => {
     const setCurrentMap = useGameStore(state => state.setCurrentMap);
+    const currentMap = useGameStore(state => state.currentMap);
     const addLog = useGameStore(state => state.addLog);
     const setNotification = useGameStore(state => state.setNotification);
+    const setNearbyInteractable = useGameStore(state => state.setNearbyInteractable);
+    const setInteractionText = useGameStore(state => state.setInteractionText);
 
-    // Return door to forest
+    const doorPos: [number, number, number] = [15, 2.5, 0];
+
+    // Check proximity for interaction prompt
     useFrame(() => {
         const playerPos = useGameStore.getState().playerPosition;
-        const doorPos: [number, number, number] = [15, 2.5, 0]; // Fixed position in office
 
         const dx = playerPos[0] - doorPos[0];
         const dy = playerPos[1] - doorPos[1];
         const dz = playerPos[2] - doorPos[2];
         const distSq = dx * dx + dy * dy + dz * dz;
 
-        if (distSq < 4.0) {
-            addLog("You escape back to the forest.", "Narrator");
-            setNotification("Returned to Forest");
-            setCurrentMap(MapLocation.FOREST);
+        if (distSq < 16.0) { // Within 4 units
+            setNearbyInteractable('office_return_door');
+            setInteractionText('Press F to return to the forest');
+        } else if (useGameStore.getState().nearbyInteractableId === 'office_return_door') {
+            setNearbyInteractable(null);
+            setInteractionText(null);
         }
     });
+
+    // Listen for F key press
+    React.useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'f' || e.key === 'F') {
+                const nearbyId = useGameStore.getState().nearbyInteractableId;
+                if (nearbyId === 'office_return_door' && currentMap === MapLocation.OFFICE) {
+                    addLog("You escape back to the forest.", "Narrator");
+                    setNotification("Returned to Forest");
+                    setCurrentMap(MapLocation.FOREST);
+                    setNearbyInteractable(null);
+                    setInteractionText(null);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [currentMap, addLog, setNotification, setCurrentMap, setNearbyInteractable, setInteractionText]);
 
     return (
         <>
@@ -184,12 +209,13 @@ export const OfficeMap: React.FC = () => {
             <OfficeFurniture />
 
             {/* Return door */}
-            <group position={[15, 2.5, 0]}>
+            <group position={doorPos}>
                 <mesh castShadow receiveShadow>
                     <planeGeometry args={[3, 5]} />
                     <meshBasicMaterial color="black" side={THREE.DoubleSide} />
                 </mesh>
-                <pointLight color="#a855f7" intensity={2} distance={8} decay={2} position={[0, 0, 0.2]} />
+                <pointLight color="#a855f7" intensity={5} distance={15} decay={2} position={[0, 0, 0.5]} />
+                <pointLight color="#a855f7" intensity={3} distance={10} decay={2} position={[0, 0, -0.5]} />
             </group>
         </>
     );

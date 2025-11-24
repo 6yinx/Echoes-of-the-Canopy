@@ -542,6 +542,8 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
     const currentMap = useGameStore(state => state.currentMap);
     const addLog = useGameStore(state => state.addLog);
     const setNotification = useGameStore(state => state.setNotification);
+    const setNearbyInteractable = useGameStore(state => state.setNearbyInteractable);
+    const setInteractionText = useGameStore(state => state.setInteractionText);
 
     // Fixed position - directly in front of player
     const doorPos: [number, number, number] = [0, 2.5, 5];
@@ -557,12 +559,33 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
         const dz = playerPos[2] - doorPos[2];
         const distSq = dx * dx + dy * dy + dz * dz;
 
-        if (distSq < 4.0) { // Increased detection range
-            addLog("You step through the mysterious door into an endless office...", "Narrator");
-            setNotification("Entered the Backrooms");
-            setCurrentMap(MapLocation.OFFICE);
+        if (distSq < 16.0) { // Within 4 units
+            setNearbyInteractable('mysterious_door');
+            setInteractionText('Press F to enter the mysterious door');
+        } else if (useGameStore.getState().nearbyInteractableId === 'mysterious_door') {
+            setNearbyInteractable(null);
+            setInteractionText(null);
         }
     });
+
+    // Listen for F key press
+    React.useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'f' || e.key === 'F') {
+                const nearbyId = useGameStore.getState().nearbyInteractableId;
+                if (nearbyId === 'mysterious_door' && currentMap === MapLocation.FOREST) {
+                    addLog("You step through the mysterious door into an endless office...", "Narrator");
+                    setNotification("Entered the Backrooms");
+                    setCurrentMap(MapLocation.OFFICE);
+                    setNearbyInteractable(null);
+                    setInteractionText(null);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [currentMap, addLog, setNotification, setCurrentMap, setNearbyInteractable, setInteractionText]);
 
     // Only render in forest
     if (currentMap !== MapLocation.FOREST) return null;
