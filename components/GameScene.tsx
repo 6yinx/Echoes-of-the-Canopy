@@ -71,12 +71,18 @@ const SceneContent = () => {
 
   return (
     <>
-      {/* Render atmosphere based on current map */}
-      {currentMap === MapLocation.FOREST && <EveningAtmosphere />}
-      {currentMap === MapLocation.OFFICE && (
+      {/* Always render forest atmosphere for menu, otherwise render based on current map */}
+      {gameState === GameState.MENU ? (
+        <EveningAtmosphere />
+      ) : (
         <>
-          <ambientLight intensity={0.3} color="#FFFACD" />
-          <fog attach="fog" args={['#F5F5DC', 20, 80]} />
+          {currentMap === MapLocation.FOREST && <EveningAtmosphere />}
+          {currentMap === MapLocation.OFFICE && (
+            <>
+              <ambientLight intensity={0.3} color="#FFFACD" />
+              <fog attach="fog" args={['#F5F5DC', 20, 80]} />
+            </>
+          )}
         </>
       )}
 
