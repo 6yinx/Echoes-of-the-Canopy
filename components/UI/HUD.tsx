@@ -34,6 +34,8 @@ const Hotbar: React.FC = () => {
 
     const slots = [0, 1, 2]; // 3 slots
 
+    const toggleInventory = useGameStore(state => state.toggleInventory);
+
     return (
         <div className={`absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 p-2 bg-stone-900/80 rounded-lg border border-stone-600 backdrop-blur-sm transition-all pointer-events-auto ${showTouchControls ? 'bottom-24' : 'bottom-6'}`}>
             {slots.map(index => {
@@ -73,6 +75,15 @@ const Hotbar: React.FC = () => {
                     </div>
                 )
             })}
+
+            {/* Inventory Expansion Button (Minecraft-style) */}
+            <button
+                onClick={toggleInventory}
+                className="w-12 h-12 rounded border-2 border-stone-700 bg-black/40 hover:border-amber-500 hover:bg-amber-900/40 flex items-center justify-center transition-colors cursor-pointer"
+                title="Open Inventory (E)"
+            >
+                <span className="text-stone-400 text-xl font-bold select-none">⋯</span>
+            </button>
         </div>
     )
 }
@@ -401,6 +412,120 @@ const MobileControls: React.FC = () => {
     )
 }
 
+const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!message.trim()) return;
+
+        setIsSubmitting(true);
+        setSubmitStatus('idle');
+
+        try {
+            const response = await fetch('https://formspree.io/f/xanyqbqy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name || 'Anonymous',
+                    email: email || 'No email provided',
+                    message: message,
+                    _subject: 'Echoes of the Canopy - Feedback',
+                }),
+            });
+
+            if (response.ok) {
+                setSubmitStatus('success');
+                setTimeout(() => {
+                    onClose();
+                }, 2000);
+            } else {
+                setSubmitStatus('error');
+            }
+        } catch (error) {
+            setSubmitStatus('error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="bg-stone-900 p-8 rounded border border-stone-600 text-stone-300 font-serif max-w-md shadow-2xl relative z-50 pointer-events-auto">
+            <h3 className="text-2xl text-amber-500 mb-4 text-center">Send Feedback</h3>
+
+            {submitStatus === 'success' ? (
+                <div className="text-center py-8">
+                    <p className="text-green-400 text-lg mb-2">✓ Feedback sent successfully!</p>
+                    <p className="text-stone-500 text-sm">Thank you for your feedback.</p>
+                </div>
+            ) : (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <div>
+                        <label className="block text-sm text-stone-400 mb-1">Name (optional)</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full px-3 py-2 bg-black/50 border border-stone-700 rounded text-white focus:border-amber-500 focus:outline-none"
+                            placeholder="Your name"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-stone-400 mb-1">Email (optional)</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full px-3 py-2 bg-black/50 border border-stone-700 rounded text-white focus:border-amber-500 focus:outline-none"
+                            placeholder="your@email.com"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm text-stone-400 mb-1">Message *</label>
+                        <textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            required
+                            rows={5}
+                            className="w-full px-3 py-2 bg-black/50 border border-stone-700 rounded text-white focus:border-amber-500 focus:outline-none resize-none"
+                            placeholder="Share your thoughts, bugs, or suggestions..."
+                        />
+                    </div>
+
+                    {submitStatus === 'error' && (
+                        <p className="text-red-400 text-sm">Failed to send feedback. Please try again.</p>
+                    )}
+
+                    <div className="flex gap-3 mt-2">
+                        <button
+                            type="submit"
+                            disabled={isSubmitting || !message.trim()}
+                            className="flex-1 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:bg-stone-700 disabled:cursor-not-allowed rounded border border-amber-600 disabled:border-stone-600 text-white font-bold transition-all"
+                        >
+                            {isSubmitting ? 'Sending...' : 'Send'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded border border-stone-600"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            )}
+        </div>
+    );
+};
+
 const StartMenu: React.FC = () => {
     const setGameState = useGameStore(state => state.setGameState);
     const setShowIntro = useGameStore(state => state.setShowIntro);
@@ -409,6 +534,7 @@ const StartMenu: React.FC = () => {
     const hasSave = useGameStore(state => state.hasSaveFile());
 
     const [showControls, setShowControls] = useState(false);
+    const [showFeedback, setShowFeedback] = useState(false);
 
     const handleNewGame = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -431,12 +557,14 @@ const StartMenu: React.FC = () => {
 
     return (
         <div className="absolute inset-0 bg-black/90 z-50 flex flex-col items-center justify-center pointer-events-auto">
-            <h1 className="text-7xl font-serif text-amber-500 mb-8 tracking-widest drop-shadow-lg text-center">
-                ECHOES<br />
-                <span className="text-3xl text-amber-700/80">OF THE CANOPY</span>
-            </h1>
+            <div className="flex flex-col items-center mb-8">
+                <h1 className="text-7xl font-serif text-amber-500 tracking-widest drop-shadow-lg text-center leading-tight">
+                    ECHOES
+                </h1>
+                <span className="text-3xl font-serif text-amber-700/80 tracking-widest mt-2">OF THE CANOPY</span>
+            </div>
 
-            {!showControls ? (
+            {!showControls && !showFeedback ? (
                 <div className="flex flex-col gap-4 w-64">
                     <button onClick={handleNewGame} className="px-6 py-4 bg-amber-900/80 hover:bg-amber-800 border border-amber-600 text-amber-100 font-serif rounded transition-all shadow-lg">
                         NEW JOURNEY
@@ -449,9 +577,14 @@ const StartMenu: React.FC = () => {
                     <button onClick={() => setShowControls(true)} className="px-6 py-2 bg-transparent hover:bg-white/5 border border-stone-600 text-stone-400 font-serif rounded transition-all text-sm">
                         CONTROLS
                     </button>
+                    <button onClick={() => setShowFeedback(true)} className="px-6 py-2 bg-transparent hover:bg-white/5 border border-stone-600 text-stone-400 font-serif rounded transition-all text-sm">
+                        FEEDBACK
+                    </button>
                 </div>
-            ) : (
+            ) : showControls ? (
                 <ControlsOverlay onClose={() => setShowControls(false)} />
+            ) : (
+                <FeedbackModal onClose={() => setShowFeedback(false)} />
             )}
 
             <div className="mt-12 text-stone-500 font-serif text-sm">v0.3.0 Beta</div>
