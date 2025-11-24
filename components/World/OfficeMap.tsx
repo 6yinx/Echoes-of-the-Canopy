@@ -22,7 +22,7 @@ export const OfficeGround: React.FC = () => {
     );
 };
 
-// Fluorescent Ceiling Lights (Liminal aesthetic)
+// Fluorescent Ceiling Lights (Liminal aesthetic) - Optimized for mobile
 export const FluorescentLights: React.FC = () => {
     const lightsRef = useRef<THREE.Group>(null);
 
@@ -32,22 +32,22 @@ export const FluorescentLights: React.FC = () => {
             const flicker = Math.sin(state.clock.elapsedTime * 30) * 0.05 + 0.95;
             lightsRef.current.children.forEach((light) => {
                 if (light instanceof THREE.RectAreaLight) {
-                    light.intensity = 3 * flicker;
+                    light.intensity = 4 * flicker; // Increased intensity since fewer lights
                 }
             });
         }
     });
 
     const lights = [];
-    const gridSize = 10;
-    const spacing = 10;
+    const gridSize = 3; // Reduced from 10 to 3 for mobile performance
+    const spacing = 15; // Increased spacing to cover same area
 
     for (let x = -gridSize / 2; x < gridSize / 2; x++) {
         for (let z = -gridSize / 2; z < gridSize / 2; z++) {
             lights.push(
                 <rectAreaLight
                     key={`light-${x}-${z}`}
-                    args={['#FFFACD', 3, 4, 2]} // Pale yellow fluorescent
+                    args={['#FFFACD', 4, 6, 3]} // Larger lights with more intensity
                     position={[x * spacing, 4.8, z * spacing]}
                     rotation={[-Math.PI / 2, 0, 0]}
                     castShadow
@@ -100,62 +100,22 @@ export const OfficeWalls: React.FC = () => {
     );
 };
 
-// Office Furniture (Minimal for liminal effect)
+// Office Furniture removed for mobile performance
+// Empty office creates better liminal space aesthetic
 export const OfficeFurniture: React.FC = () => {
-    const furniture = [];
-
-    // Scattered desks
-    const deskPositions = [
-        [10, 0.4, 10],
-        [-15, 0.4, -20],
-        [20, 0.4, -15],
-        [-25, 0.4, 15],
-        [5, 0.4, -30]
-    ];
-
-    deskPositions.forEach((pos, i) => {
-        furniture.push(
-            <group key={`desk-${i}`} position={pos as [number, number, number]}>
-                {/* Desk surface */}
-                <mesh position={[0, 0, 0]}>
-                    <boxGeometry args={[2, 0.1, 1]} />
-                    <meshStandardMaterial color="#8B7355" />
-                </mesh>
-                {/* Desk legs */}
-                <mesh position={[-0.8, -0.4, 0.4]}>
-                    <boxGeometry args={[0.1, 0.8, 0.1]} />
-                    <meshStandardMaterial color="#696969" />
-                </mesh>
-                <mesh position={[0.8, -0.4, 0.4]}>
-                    <boxGeometry args={[0.1, 0.8, 0.1]} />
-                    <meshStandardMaterial color="#696969" />
-                </mesh>
-                <mesh position={[-0.8, -0.4, -0.4]}>
-                    <boxGeometry args={[0.1, 0.8, 0.1]} />
-                    <meshStandardMaterial color="#696969" />
-                </mesh>
-                <mesh position={[0.8, -0.4, -0.4]}>
-                    <boxGeometry args={[0.1, 0.8, 0.1]} />
-                    <meshStandardMaterial color="#696969" />
-                </mesh>
-            </group>
-        );
-    });
-
-    return <group>{furniture}</group>;
+    return null;
 };
 
-// Complete Office Map
+// Complete Office Map - Optimized for mobile
 export const OfficeMap: React.FC = () => {
     return (
         <>
-            {/* Fluorescent lights */}
+            {/* Fluorescent lights - reduced for performance */}
             <FluorescentLights />
 
             {/* Environment */}
             <OfficeGround />
             <OfficeWalls />
-            <OfficeFurniture />
 
             {/* Return door to forest */}
             <OfficeReturnDoor />
