@@ -4,7 +4,7 @@ import { usePlane, useCylinder, useBox, useSphere } from '@react-three/cannon';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../../store';
-import { MapLocation } from '../../types';
+import { MapLocation, GameState } from '../../types';
 
 // --- Random Utils ---
 
@@ -543,9 +543,7 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
     const setCurrentMap = useGameStore(state => state.setCurrentMap);
     const currentMap = useGameStore(state => state.currentMap);
     const addLog = useGameStore(state => state.addLog);
-    const setNotification = useGameStore(state => state.setNotification);
-    const setNearbyInteractable = useGameStore(state => state.setNearbyInteractable);
-    const setInteractionText = useGameStore(state => state.setInteractionText);
+    const setGameState = useGameStore(state => state.setGameState);
     const { camera } = useThree();
 
     useEffect(() => {
@@ -612,41 +610,21 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
         const dz = playerPos[2] - pos[2];
         const distSq = dx * dx + dy * dy + dz * dz;
 
-        if (distSq < 16.0 && pos[1] > -100) { // Within 4 units and door is visible
-            setNearbyInteractable('mysterious_door');
-            setInteractionText('Press F to enter the mysterious door');
-        } else if (useGameStore.getState().nearbyInteractableId === 'mysterious_door') {
-            setNearbyInteractable(null);
-            setInteractionText(null);
+        // Touch-based entry - automatic when player gets close
+        if (distSq < 4.0 && pos[1] > -100) { // Within 2 units and door is visible
+            addLog("You step through the mysterious door into an endless office...", "Narrator");
+            setGameState(GameState.LOADING); // Trigger loading screen
+            setCurrentMap(MapLocation.OFFICE);
+            setPos([0, -500, 0]); // Hide door after use (one-way portal)
         }
     });
-
-    // Listen for F key press
-    React.useEffect(() => {
-        const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.key === 'f' || e.key === 'F') {
-                const nearbyId = useGameStore.getState().nearbyInteractableId;
-                if (nearbyId === 'mysterious_door' && currentMap === MapLocation.FOREST) {
-                    addLog("You step through the mysterious door into an endless office...", "Narrator");
-                    setNotification("Entered the Backrooms");
-                    setCurrentMap(MapLocation.OFFICE);
-                    setNearbyInteractable(null);
-                    setInteractionText(null);
-                    setPos([0, -500, 0]); // Hide door after use (one-way portal)
-                }
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentMap, addLog, setNotification, setCurrentMap, setNearbyInteractable, setInteractionText]);
 
     // Only render in forest
     if (currentMap !== MapLocation.FOREST) return null;
 
     return (
         <group position={pos} rotation={rot}>
-            <mesh castShadow receiveShadow>
+            <mesh receiveShadow> {/* Removed castShadow */}
                 <planeGeometry args={[3, 5]} />
                 <meshBasicMaterial color="black" side={THREE.DoubleSide} />
             </mesh>
