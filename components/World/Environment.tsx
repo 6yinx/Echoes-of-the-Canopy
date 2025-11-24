@@ -538,57 +538,44 @@ const MapBoundary: React.FC<{ limit: number }> = ({ limit }) => {
 
 // --- Mysterious Door ---
 const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
-    const [pos, setPos] = useState<[number, number, number]>([0, -500, 0]); // Start hidden
-    const [rot, setRot] = useState<[number, number, number]>([0, 0, 0]);
     const setCurrentMap = useGameStore(state => state.setCurrentMap);
     const currentMap = useGameStore(state => state.currentMap);
     const addLog = useGameStore(state => state.addLog);
     const setNotification = useGameStore(state => state.setNotification);
-    const { camera } = useThree();
 
-    useEffect(() => {
-        const spawn = () => {
-            // Spawn door directly in front of player for easy access
-            setPos([0, 2.5, 5]); // 5 units south of spawn
-            setRot([0, Math.PI, 0]); // Face towards player
-        };
-
-        spawn(); // Initial spawn
-        const interval = setInterval(spawn, 60000);
-        return () => clearInterval(interval);
-    }, []);
+    // Fixed position - directly in front of player
+    const doorPos: [number, number, number] = [0, 2.5, 5];
+    const doorRot: [number, number, number] = [0, Math.PI, 0];
 
     useFrame(() => {
+        // Only check for interaction in forest map
+        if (currentMap !== MapLocation.FOREST) return;
+
         const playerPos = useGameStore.getState().playerPosition;
-        const dx = playerPos[0] - pos[0];
-        const dy = playerPos[1] - pos[1];
-        const dz = playerPos[2] - pos[2];
+        const dx = playerPos[0] - doorPos[0];
+        const dy = playerPos[1] - doorPos[1];
+        const dz = playerPos[2] - doorPos[2];
         const distSq = dx * dx + dy * dy + dz * dz;
 
-        if (distSq < 2.0 && pos[1] > -100) {
-            // Transition between maps
-            const targetMap = currentMap === MapLocation.FOREST ? MapLocation.OFFICE : MapLocation.FOREST;
-
-            if (targetMap === MapLocation.OFFICE) {
-                addLog("You step through the mysterious door into an endless office...", "Narrator");
-                setNotification("Entered the Backrooms");
-            } else {
-                addLog("You escape back to the forest.", "Narrator");
-                setNotification("Returned to Forest");
-            }
-
-            setCurrentMap(targetMap);
-            setPos([0, -500, 0]); // Hide door after use
+        if (distSq < 4.0) { // Increased detection range
+            addLog("You step through the mysterious door into an endless office...", "Narrator");
+            setNotification("Entered the Backrooms");
+            setCurrentMap(MapLocation.OFFICE);
         }
     });
 
+    // Only render in forest
+    if (currentMap !== MapLocation.FOREST) return null;
+
     return (
-        <group position={pos} rotation={rot as any}>
+        <group position={doorPos} rotation={doorRot}>
             <mesh castShadow receiveShadow>
                 <planeGeometry args={[3, 5]} />
                 <meshBasicMaterial color="black" side={THREE.DoubleSide} />
             </mesh>
-            <pointLight color="#a855f7" intensity={2} distance={8} decay={2} position={[0, 0, 0.2]} />
+            {/* Brighter purple glow for visibility */}
+            <pointLight color="#a855f7" intensity={5} distance={15} decay={2} position={[0, 0, 0.5]} />
+            <pointLight color="#a855f7" intensity={3} distance={10} decay={2} position={[0, 0, -0.5]} />
         </group>
     );
 }
