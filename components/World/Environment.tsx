@@ -4,6 +4,7 @@ import { usePlane, useCylinder, useBox, useSphere } from '@react-three/cannon';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../../store';
+import { MapLocation } from '../../types';
 
 // --- Random Utils ---
 
@@ -539,63 +540,23 @@ const MapBoundary: React.FC<{ limit: number }> = ({ limit }) => {
 const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
     const [pos, setPos] = useState<[number, number, number]>([0, -500, 0]); // Start hidden
     const [rot, setRot] = useState<[number, number, number]>([0, 0, 0]);
-    const teleportPlayer = useGameStore(state => state.teleportPlayer);
+    const setCurrentMap = useGameStore(state => state.setCurrentMap);
+    const currentMap = useGameStore(state => state.currentMap);
     const addLog = useGameStore(state => state.addLog);
     const setNotification = useGameStore(state => state.setNotification);
     const { camera } = useThree();
 
     useEffect(() => {
         const spawn = () => {
-            const dir = new THREE.Vector3();
-            camera.getWorldDirection(dir);
-            let targetSide = 0;
-            if (Math.abs(dir.x) > Math.abs(dir.z)) {
-                targetSide = dir.x > 0 ? 2 : 3;
-            } else {
-                targetSide = dir.z > 0 ? 0 : 1;
-            }
-
-            let side = targetSide;
-            if (Math.random() > 0.75) {
-                side = Math.floor(Math.random() * 4);
-            }
-
-            const edge = limit - 0.2;
-            const range = limit - 10;
-            const offset = (Math.random() - 0.5) * 2 * range;
-
-            let p: [number, number, number];
-            let r: [number, number, number];
-
-            switch (side) {
-                case 0: // +Z barrier
-                    p = [offset, 2.5, edge];
-                    r = [0, Math.PI, 0];
-                    break;
-                case 1: // -Z barrier
-                    p = [offset, 2.5, -edge];
-                    r = [0, 0, 0];
-                    break;
-                case 2: // +X barrier
-                    p = [edge, 2.5, offset];
-                    r = [0, -Math.PI / 2, 0];
-                    break;
-                case 3: // -X barrier
-                    p = [-edge, 2.5, offset];
-                    r = [0, Math.PI / 2, 0];
-                    break;
-                default:
-                    p = [0, -500, 0];
-                    r = [0, 0, 0];
-            }
-            setPos(p);
-            setRot(r);
+            // Spawn door directly in front of player for easy access
+            setPos([0, 2.5, 5]); // 5 units south of spawn
+            setRot([0, Math.PI, 0]); // Face towards player
         };
 
         spawn(); // Initial spawn
         const interval = setInterval(spawn, 60000);
         return () => clearInterval(interval);
-    }, [limit, camera]);
+    }, []);
 
     useFrame(() => {
         const playerPos = useGameStore.getState().playerPosition;
@@ -605,13 +566,19 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
         const distSq = dx * dx + dy * dy + dz * dz;
 
         if (distSq < 2.0 && pos[1] > -100) {
-            addLog("The world shifts as you step through the darkness.", "Narrator");
-            setNotification("Entered the Void");
-            const safeRange = limit * 0.6;
-            const rX = (Math.random() - 0.5) * 2 * safeRange;
-            const rZ = (Math.random() - 0.5) * 2 * safeRange;
-            teleportPlayer([rX, 5, rZ]);
-            setPos([0, -500, 0]);
+            // Transition between maps
+            const targetMap = currentMap === MapLocation.FOREST ? MapLocation.OFFICE : MapLocation.FOREST;
+
+            if (targetMap === MapLocation.OFFICE) {
+                addLog("You step through the mysterious door into an endless office...", "Narrator");
+                setNotification("Entered the Backrooms");
+            } else {
+                addLog("You escape back to the forest.", "Narrator");
+                setNotification("Returned to Forest");
+            }
+
+            setCurrentMap(targetMap);
+            setPos([0, -500, 0]); // Hide door after use
         }
     });
 
