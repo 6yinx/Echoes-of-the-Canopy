@@ -538,28 +538,81 @@ const MapBoundary: React.FC<{ limit: number }> = ({ limit }) => {
 
 // --- Mysterious Door ---
 const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
+    const [pos, setPos] = useState<[number, number, number]>([0, -500, 0]); // Start hidden
+    const [rot, setRot] = useState<[number, number, number]>([0, 0, 0]);
     const setCurrentMap = useGameStore(state => state.setCurrentMap);
     const currentMap = useGameStore(state => state.currentMap);
     const addLog = useGameStore(state => state.addLog);
     const setNotification = useGameStore(state => state.setNotification);
     const setNearbyInteractable = useGameStore(state => state.setNearbyInteractable);
     const setInteractionText = useGameStore(state => state.setInteractionText);
+    const { camera } = useThree();
 
-    // Fixed position - directly in front of player
-    const doorPos: [number, number, number] = [0, 2.5, 5];
-    const doorRot: [number, number, number] = [0, Math.PI, 0];
+    useEffect(() => {
+        const spawn = () => {
+            const dir = new THREE.Vector3();
+            camera.getWorldDirection(dir);
+            let targetSide = 0;
+            if (Math.abs(dir.x) > Math.abs(dir.z)) {
+                targetSide = dir.x > 0 ? 2 : 3;
+            } else {
+                targetSide = dir.z > 0 ? 0 : 1;
+            }
+
+            // 75% chance to spawn in front of player, 25% random
+            let side = targetSide;
+            if (Math.random() > 0.75) {
+                side = Math.floor(Math.random() * 4);
+            }
+
+            const edge = limit - 0.2;
+            const range = limit - 10;
+            const offset = (Math.random() - 0.5) * 2 * range;
+
+            let p: [number, number, number];
+            let r: [number, number, number];
+
+            switch (side) {
+                case 0: // +Z barrier
+                    p = [offset, 2.5, edge];
+                    r = [0, Math.PI, 0];
+                    break;
+                case 1: // -Z barrier
+                    p = [offset, 2.5, -edge];
+                    r = [0, 0, 0];
+                    break;
+                case 2: // +X barrier
+                    p = [edge, 2.5, offset];
+                    r = [0, -Math.PI / 2, 0];
+                    break;
+                case 3: // -X barrier
+                    p = [-edge, 2.5, offset];
+                    r = [0, Math.PI / 2, 0];
+                    break;
+                default:
+                    p = [0, -500, 0];
+                    r = [0, 0, 0];
+            }
+            setPos(p);
+            setRot(r);
+        };
+
+        spawn(); // Initial spawn
+        const interval = setInterval(spawn, 60000);
+        return () => clearInterval(interval);
+    }, [limit, camera]);
 
     useFrame(() => {
         // Only check for interaction in forest map
         if (currentMap !== MapLocation.FOREST) return;
 
         const playerPos = useGameStore.getState().playerPosition;
-        const dx = playerPos[0] - doorPos[0];
-        const dy = playerPos[1] - doorPos[1];
-        const dz = playerPos[2] - doorPos[2];
+        const dx = playerPos[0] - pos[0];
+        const dy = playerPos[1] - pos[1];
+        const dz = playerPos[2] - pos[2];
         const distSq = dx * dx + dy * dy + dz * dz;
 
-        if (distSq < 16.0) { // Within 4 units
+        if (distSq < 16.0 && pos[1] > -100) { // Within 4 units and door is visible
             setNearbyInteractable('mysterious_door');
             setInteractionText('Press F to enter the mysterious door');
         } else if (useGameStore.getState().nearbyInteractableId === 'mysterious_door') {
@@ -579,6 +632,7 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
                     setCurrentMap(MapLocation.OFFICE);
                     setNearbyInteractable(null);
                     setInteractionText(null);
+                    setPos([0, -500, 0]); // Hide door after use (one-way portal)
                 }
             }
         };
@@ -591,83 +645,21 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
     if (currentMap !== MapLocation.FOREST) return null;
 
     return (
-        <group position={doorPos} rotation={doorRot}>
+        <group position={pos} rotation={rot}>
             <mesh castShadow receiveShadow>
                 <planeGeometry args={[3, 5]} />
                 <meshBasicMaterial color="black" side={THREE.DoubleSide} />
             </mesh>
             {/* Brighter purple glow for visibility */}
             <pointLight color="#a855f7" intensity={5} distance={15} decay={2} position={[0, 0, 0.5]} />
-            <pointLight color="#a855f7" intensity={3} distance={10} decay={2} position={[0, 0, -0.5]} />
         </group>
     );
 }
 
-// --- Office Return Door ---
+// --- Office Return Door removed - one-way portal only ---
+// Players cannot return from the office
 export const OfficeReturnDoor: React.FC = () => {
-    const setCurrentMap = useGameStore(state => state.setCurrentMap);
-    const currentMap = useGameStore(state => state.currentMap);
-    const addLog = useGameStore(state => state.addLog);
-    const setNotification = useGameStore(state => state.setNotification);
-    const setNearbyInteractable = useGameStore(state => state.setNearbyInteractable);
-    const setInteractionText = useGameStore(state => state.setInteractionText);
-
-    // Fixed position in office
-    const doorPos: [number, number, number] = [15, 2.5, 0];
-    const doorRot: [number, number, number] = [0, -Math.PI / 2, 0];
-
-    useFrame(() => {
-        // Only check for interaction in office map
-        if (currentMap !== MapLocation.OFFICE) return;
-
-        const playerPos = useGameStore.getState().playerPosition;
-        const dx = playerPos[0] - doorPos[0];
-        const dy = playerPos[1] - doorPos[1];
-        const dz = playerPos[2] - doorPos[2];
-        const distSq = dx * dx + dy * dy + dz * dz;
-
-        if (distSq < 16.0) { // Within 4 units
-            setNearbyInteractable('office_return_door');
-            setInteractionText('Press F to return to the forest');
-        } else if (useGameStore.getState().nearbyInteractableId === 'office_return_door') {
-            setNearbyInteractable(null);
-            setInteractionText(null);
-        }
-    });
-
-    // Listen for F key press
-    React.useEffect(() => {
-        const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.key === 'f' || e.key === 'F') {
-                const nearbyId = useGameStore.getState().nearbyInteractableId;
-                if (nearbyId === 'office_return_door' && currentMap === MapLocation.OFFICE) {
-                    addLog("You escape back to the forest.", "Narrator");
-                    setNotification("Returned to Forest");
-                    setCurrentMap(MapLocation.FOREST);
-                    setNearbyInteractable(null);
-                    setInteractionText(null);
-                }
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [currentMap, addLog, setNotification, setCurrentMap, setNearbyInteractable, setInteractionText]);
-
-    // Only render in office
-    if (currentMap !== MapLocation.OFFICE) return null;
-
-    return (
-        <group position={doorPos} rotation={doorRot}>
-            <mesh castShadow receiveShadow>
-                <planeGeometry args={[3, 5]} />
-                <meshBasicMaterial color="black" side={THREE.DoubleSide} />
-            </mesh>
-            {/* Brighter purple glow for visibility */}
-            <pointLight color="#a855f7" intensity={5} distance={15} decay={2} position={[0, 0, 0.5]} />
-            <pointLight color="#a855f7" intensity={3} distance={10} decay={2} position={[0, 0, -0.5]} />
-        </group>
-    );
+    return null;
 }
 
 // --- Visual Background ---
