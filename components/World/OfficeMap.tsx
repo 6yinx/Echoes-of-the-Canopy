@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { usePlane } from '@react-three/cannon';
 import { useGameStore } from '../../store';
 import { MapLocation } from '../../types';
+import { OfficeReturnDoor } from './Environment';
 
 // Liminal Office Environment
 export const OfficeGround: React.FC = () => {
@@ -155,9 +156,9 @@ export const OfficeMap: React.FC = () => {
             <OfficeGround />
             <OfficeWalls />
             <OfficeFurniture />
-            <pointLight color="#a855f7" intensity={5} distance={15} decay={2} position={[0, 0, 0.5]} />
-            <pointLight color="#a855f7" intensity={3} distance={10} decay={2} position={[0, 0, -0.5]} />
-        </group >
+
+            {/* Return door to forest */}
+            <OfficeReturnDoor />
         </>
     );
 };
