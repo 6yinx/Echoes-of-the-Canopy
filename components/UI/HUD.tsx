@@ -404,45 +404,33 @@ const MobileControls: React.FC = () => {
 }
 
 const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [submitStatus, setSubmitStatus] = useState<'idle' | 'success'>('idle');
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (!message.trim()) return;
-
-        setIsSubmitting(true);
-        setSubmitStatus('idle');
+        const form = e.currentTarget;
+        const formData = new FormData(form);
 
         try {
-            const response = await fetch('https://formspree.io/f/cheajy6138@gmail.com', {
+            const response = await fetch(form.action, {
                 method: 'POST',
+                body: formData,
                 headers: {
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: name || 'Anonymous',
-                    email: email || 'No email provided',
-                    message: message,
-                    _subject: 'Echoes of the Canopy - Feedback',
-                }),
+                    'Accept': 'application/json'
+                }
             });
 
             if (response.ok) {
                 setSubmitStatus('success');
+                form.reset();
                 setTimeout(() => {
                     onClose();
                 }, 2000);
             } else {
-                setSubmitStatus('error');
+                alert('Failed to send feedback. Please try again or email directly to cheajy6138@gmail.com');
             }
         } catch (error) {
-            setSubmitStatus('error');
-        } finally {
-            setIsSubmitting(false);
+            alert('Failed to send feedback. Please try again or email directly to cheajy6138@gmail.com');
         }
     };
 
@@ -456,13 +444,12 @@ const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <p className="text-stone-500 text-sm">Thank you for your feedback.</p>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <form onSubmit={handleSubmit} action="https://formspree.io/f/xgvqdyde" method="POST" className="flex flex-col gap-4">
                     <div>
                         <label className="block text-sm text-stone-400 mb-1">Name (optional)</label>
                         <input
                             type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            name="name"
                             className="w-full px-3 py-2 bg-black/50 border border-stone-700 rounded text-white focus:border-amber-500 focus:outline-none"
                             placeholder="Your name"
                         />
@@ -472,8 +459,7 @@ const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         <label className="block text-sm text-stone-400 mb-1">Email (optional)</label>
                         <input
                             type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            name="email"
                             className="w-full px-3 py-2 bg-black/50 border border-stone-700 rounded text-white focus:border-amber-500 focus:outline-none"
                             placeholder="your@email.com"
                         />
@@ -482,8 +468,7 @@ const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <div>
                         <label className="block text-sm text-stone-400 mb-1">Message *</label>
                         <textarea
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
+                            name="message"
                             required
                             rows={5}
                             className="w-full px-3 py-2 bg-black/50 border border-stone-700 rounded text-white focus:border-amber-500 focus:outline-none resize-none"
@@ -491,17 +476,14 @@ const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         />
                     </div>
 
-                    {submitStatus === 'error' && (
-                        <p className="text-red-400 text-sm">Failed to send feedback. Please try again.</p>
-                    )}
+                    <input type="hidden" name="_subject" value="Echoes of the Canopy - Feedback" />
 
                     <div className="flex gap-3 mt-2">
                         <button
                             type="submit"
-                            disabled={isSubmitting || !message.trim()}
-                            className="flex-1 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:bg-stone-700 disabled:cursor-not-allowed rounded border border-amber-600 disabled:border-stone-600 text-white font-bold transition-all"
+                            className="flex-1 px-4 py-2 bg-amber-700 hover:bg-amber-600 rounded border border-amber-600 text-white font-bold transition-all"
                         >
-                            {isSubmitting ? 'Sending...' : 'Send'}
+                            Send
                         </button>
                         <button
                             type="button"
@@ -548,11 +530,11 @@ const StartMenu: React.FC = () => {
 
     return (
         <div className="absolute inset-0 bg-black/90 z-50 flex flex-col items-center justify-center pointer-events-auto">
-            <div className="flex flex-col items-center mb-8 max-w-2xl">
-                <h1 className="text-7xl font-serif text-amber-500 tracking-widest drop-shadow-lg text-center leading-tight whitespace-nowrap">
+            <div className="flex flex-col items-center mb-8 w-full px-4">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl font-serif text-amber-500 tracking-widest drop-shadow-lg text-center leading-none mb-3 block">
                     ECHOES
                 </h1>
-                <span className="text-3xl font-serif text-amber-700/80 tracking-widest mt-2 whitespace-nowrap">OF THE CANOPY</span>
+                <span className="text-2xl sm:text-3xl font-serif text-amber-700/80 tracking-widest block">OF THE CANOPY</span>
             </div>
 
             {!showControls && !showFeedback ? (
