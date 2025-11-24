@@ -127,6 +127,42 @@ const HeldBundle: React.FC = () => {
 }
 
 
+
+const Flashlight: React.FC = () => {
+    const [target, setTarget] = useState<THREE.Object3D | null>(null);
+
+    return (
+        <group>
+            {/* Flashlight beam */}
+            <spotLight
+                position={[0.2, -0.2, 0]}
+                angle={0.6}
+                penumbra={0.2}
+                intensity={100}
+                distance={80}
+                color="#ffffff"
+                castShadow
+                target={target || undefined}
+            />
+            {/* Inner bright core */}
+            <spotLight
+                position={[0.2, -0.2, 0]}
+                angle={0.3}
+                penumbra={0.1}
+                intensity={150}
+                distance={100}
+                color="#e0f2fe"
+                target={target || undefined}
+            />
+            {/* Ambient spill */}
+            <pointLight position={[0, 0, 0]} intensity={2} distance={5} color="#ffffff" decay={2} />
+
+            {/* Invisible target for spotlight to look at */}
+            <object3D ref={setTarget} position={[0, 0, -10]} />
+        </group>
+    );
+};
+
 export const Player: React.FC = () => {
     const { scene, camera, gl } = useThree();
 
