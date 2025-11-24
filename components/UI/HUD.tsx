@@ -398,16 +398,7 @@ const MobileControls: React.FC = () => {
                 </button>
             </div>
 
-            {!isInventoryOpen && (
-                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto opacity-80">
-                    <button
-                        className="px-8 py-3 bg-stone-800/90 border-2 border-stone-500 rounded-lg text-amber-100 font-serif text-sm active:bg-stone-700 shadow-lg"
-                        onClick={toggleInventory}
-                    >
-                        INVENTORY
-                    </button>
-                </div>
-            )}
+            {/* INVENTORY button removed - use hotbar "..." button instead */}
         </>
     )
 }
@@ -427,10 +418,10 @@ const FeedbackModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         setSubmitStatus('idle');
 
         try {
-            const response = await fetch('https://formspree.io/f/xanyqbqy', {
+            const response = await fetch('https://formspree.io/f/cheajy6138@gmail.com', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
                 body: JSON.stringify({
                     name: name || 'Anonymous',
@@ -557,11 +548,11 @@ const StartMenu: React.FC = () => {
 
     return (
         <div className="absolute inset-0 bg-black/90 z-50 flex flex-col items-center justify-center pointer-events-auto">
-            <div className="flex flex-col items-center mb-8">
-                <h1 className="text-7xl font-serif text-amber-500 tracking-widest drop-shadow-lg text-center leading-tight">
+            <div className="flex flex-col items-center mb-8 max-w-2xl">
+                <h1 className="text-7xl font-serif text-amber-500 tracking-widest drop-shadow-lg text-center leading-tight whitespace-nowrap">
                     ECHOES
                 </h1>
-                <span className="text-3xl font-serif text-amber-700/80 tracking-widest mt-2">OF THE CANOPY</span>
+                <span className="text-3xl font-serif text-amber-700/80 tracking-widest mt-2 whitespace-nowrap">OF THE CANOPY</span>
             </div>
 
             {!showControls && !showFeedback ? (
@@ -738,7 +729,7 @@ export const HUD: React.FC = () => {
                 <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center pointer-events-auto text-white z-[100]">
                     {!showPauseControls ? (
                         <div className="border-4 border-double border-amber-700 p-12 bg-stone-900 shadow-2xl rounded-lg text-center">
-                            <h1 className="text-6xl font-serif mb-8 text-amber-500 tracking-widest drop-shadow-lg">PAUSED</h1>
+                            <h1 className="text-6xl font-serif mb-8 text-amber-500 tracking-widest drop-shadow-lg whitespace-nowrap">PAUSED</h1>
                             <div className="flex flex-col gap-4 w-64 mx-auto">
                                 <button onClick={handleResume} className="px-6 py-3 bg-amber-900 hover:bg-amber-800 border border-amber-500 rounded text-amber-100 font-serif font-bold transition-all shadow-lg hover:scale-105">RESUME</button>
                                 <button onClick={() => setShowPauseControls(true)} className="px-6 py-3 bg-stone-800 hover:bg-stone-700 border border-stone-600 rounded text-stone-300 font-serif font-bold transition-all shadow-lg">CONTROLS</button>
