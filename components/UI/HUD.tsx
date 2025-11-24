@@ -591,56 +591,66 @@ const NotificationDisplay: React.FC = () => {
 }
 
 export const HUD: React.FC = () => {
+    const gameState = useGameStore(state => state.gameState);
     const isPaused = useGameStore(state => state.isPaused);
     const setPaused = useGameStore(state => state.setPaused);
     const isInventoryOpen = useGameStore(state => state.isInventoryOpen);
+    const toggleInventory = useGameStore(state => state.toggleInventory);
     const interactionText = useGameStore(state => state.interactionText);
-    const gameState = useGameStore(state => state.gameState);
-    const saveGame = useGameStore(state => state.saveGame);
-    const setGameState = useGameStore(state => state.setGameState);
-    const showTouchControls = useGameStore(state => state.showTouchControls);
     const health = useGameStore(state => state.health);
     const hunger = useGameStore(state => state.hunger);
     const stamina = useGameStore(state => state.stamina);
-    const [showPauseControls, setShowPauseControls] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+    const notification = useGameStore(state => state.notification);
+    const isMobile = useGameStore(state => state.showTouchControls); // Renamed from showTouchControls to isMobile for clarity in this context
 
+    const [showPauseControls, setShowPauseControls] = useState(false);
+    const [displayMobileControls, setDisplayMobileControls] = useState(false); // This will be calculated below
+
+    const handleResume = () => {
+        setPaused(false);
+        setShowPauseControls(false);
+    };
+
+    const handleSaveAndQuit = () => {
+        useGameStore.getState().saveGame();
+        useGameStore.getState().setGameState(GameState.MENU);
+        setPaused(false);
+    };
+
+    // Handle ESC key for pause menu
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (gameState === GameState.PLAYING) {
+                    if (isInventoryOpen) {
+                        toggleInventory(); // Close inventory first
+                    } else if (isPaused) {
+                        setPaused(false); // Unpause if already paused
+                    } else {
+                        setPaused(true); // Pause the game
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [gameState, isPaused, isInventoryOpen, setPaused, toggleInventory]);
+
+    // Determine if mobile controls should be displayed
     useEffect(() => {
         const checkMobile = () => {
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 1024;
         };
-        setIsMobile(checkMobile());
-    }, []);
+        setDisplayMobileControls(checkMobile() || isMobile);
+    }, [isMobile]);
 
-    const displayMobileControls = (isMobile || showTouchControls) && gameState === GameState.PLAYING && !isPaused && !isInventoryOpen;
 
     useEffect(() => {
         if (isPaused || isInventoryOpen || gameState !== GameState.PLAYING || displayMobileControls) {
             document.exitPointerLock();
         }
     }, [isInventoryOpen, isPaused, gameState, displayMobileControls]);
-
-    const handleResume = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        (e.target as HTMLElement).blur();
-        if (!displayMobileControls && !isMobile) {
-            const canvas = document.querySelector('canvas');
-            // Safely request lock
-            if (canvas && document.pointerLockElement !== canvas) {
-                (canvas as any).requestPointerLock()?.catch((e: any) => { });
-            }
-        }
-        setPaused(false);
-        setShowPauseControls(false);
-    };
-
-    const handleSaveAndQuit = () => {
-        saveGame();
-        document.exitPointerLock();
-        setGameState(GameState.MENU);
-        setShowPauseControls(false);
-    }
 
     if (gameState === GameState.MENU) return <StartMenu />;
     if (gameState === GameState.LOADING) return <LoadingScreen />;

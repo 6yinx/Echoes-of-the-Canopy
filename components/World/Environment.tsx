@@ -540,6 +540,7 @@ const MapBoundary: React.FC<{ limit: number }> = ({ limit }) => {
 const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
     const [pos, setPos] = useState<[number, number, number]>([0, -500, 0]); // Start hidden
     const [rot, setRot] = useState<[number, number, number]>([0, 0, 0]);
+    const [hasTriggered, setHasTriggered] = useState(false); // Prevent multiple triggers
     const setCurrentMap = useGameStore(state => state.setCurrentMap);
     const currentMap = useGameStore(state => state.currentMap);
     const addLog = useGameStore(state => state.addLog);
@@ -593,6 +594,7 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
             }
             setPos(p);
             setRot(r);
+            setHasTriggered(false); // Reset trigger on new spawn
         };
 
         spawn(); // Initial spawn
@@ -603,6 +605,7 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
     useFrame(() => {
         // Only check for interaction in forest map
         if (currentMap !== MapLocation.FOREST) return;
+        if (hasTriggered) return; // Prevent multiple triggers
 
         const playerPos = useGameStore.getState().playerPosition;
         const dx = playerPos[0] - pos[0];
@@ -612,10 +615,15 @@ const MysteriousDoor: React.FC<{ limit: number }> = ({ limit }) => {
 
         // Touch-based entry - automatic when player gets close
         if (distSq < 4.0 && pos[1] > -100) { // Within 2 units and door is visible
+            setHasTriggered(true); // Mark as triggered
             addLog("You step through the mysterious door into an endless office...", "Narrator");
             setGameState(GameState.LOADING); // Trigger loading screen
-            setCurrentMap(MapLocation.OFFICE);
-            setPos([0, -500, 0]); // Hide door after use (one-way portal)
+
+            // Delay map change to ensure loading screen shows
+            setTimeout(() => {
+                setCurrentMap(MapLocation.OFFICE);
+                setPos([0, -500, 0]); // Hide door after use (one-way portal)
+            }, 100);
         }
     });
 
